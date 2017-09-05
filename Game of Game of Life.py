@@ -38,7 +38,7 @@ def Check(a,b):
     total[Board[a-1][b+1].CurrentState]+=1
     Next=0
     if Type==0:
-        if total[0]==5:
+        if total[0]==5:# if 5 dead cells; ie. if 3 alive cells
             Next=1
     if Type==Square:
         if total[0]==5 or total[0]==6:
