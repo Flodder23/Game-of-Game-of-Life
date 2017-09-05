@@ -45,9 +45,8 @@ def Check(a,b):
             Next=1
     return Next
 
-def Reset():
-    global Board
-    Board=[[Cell()for a in range(Height+(2*Cushion))]for b in range(Width+2*Cushion)]
+def CleanBoard():
+    return [[Cell()for a in range(Height+(2*Cushion))]for b in range(Width+2*Cushion)]
 
 def Draw(Type,a,b,colour):
     """Draws a type of cell (Type) at the desired cell (a,b)"""
@@ -59,20 +58,10 @@ def Draw(Type,a,b,colour):
     if Type==Square:
         pg.draw.rect(Screen,colour,(x,y,s,s))
 
-pg.init()
-Screen=pg.display.set_mode((Size*Width,Size*Height))
-Screen.fill(Background)
-pg.display.set_caption("Game of Life")
-Reset()
-
-print("""
-LEFT CLICK to make a Board "alive".\n
-RIGHT CLICK to Kill a cell.\n
-Press SPACE to pause/unpause the game.\n
-When paused, click RIGHT ARROW to go forward one turn.""")
-
-while True:
-    for event in pg.event.get(): #Checks for SPACE input for pausing/unpausing
+def CheckUserInput():
+    global Paused
+    global OneTurn
+    for event in pg.event.get():
         x,y=pg.mouse.get_pos()
         a=m.floor(x/Size)+Cushion
         b=m.floor(y/Size)+Cushion
@@ -87,6 +76,15 @@ while True:
             Board[a][b].Birth(Square)
         if pg.mouse.get_pressed()[2]:
             Board[a][b].Kill()
+
+pg.init()
+Screen=pg.display.set_mode((Size*Width,Size*Height))
+Screen.fill(Background)
+pg.display.set_caption("Game of Life")
+Board=CleanBoard()
+
+while True:
+    CheckUserInput()
     if not Paused or ( OneTurn and Paused ):
         if OneTurn:
             OneTurn=False
@@ -97,14 +95,13 @@ while True:
                     Board[a][b].Kill()
                 else:
                     Board[a][b].Birth(Fate)
-    for a in range(Cushion,Width+Cushion):     #This is seperate to when the values
-        for b in range(Cushion,Height+Cushion):# are changed because not all
-            if Board[a][b].NextState==0:       # changed due to the cushion.
-                colour=(255,255,255)
-            else:
-                colour=(0,0,0)
-            Draw(Board[a][b].NextState,a,b,colour) #Draws the cell as desired
-    for a in range(0,Width+(2*Cushion)):
-        for b in range(0,Height+(2*Cushion)):
-            Board[a][b].CurrentState=Board[a][b].NextState #Updates CurrentState variable
+    for a in range(Width+2*Cushion):
+        for b in range(Height+2*Cushion):
+            if a>=Cushion and a<Width+Cushion and b>=Cushion and b<Width+Cushion:
+                if Board[a][b].NextState==0:
+                    colour=(255,255,255)
+                else:
+                    colour=(0,0,0)
+                Draw(Board[a][b].NextState,a,b,colour) #Draws the cell as desired
+            Board[a][b].CurrentState=Board[a][b].NextState
     pg.display.update ()
