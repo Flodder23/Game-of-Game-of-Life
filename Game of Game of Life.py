@@ -8,6 +8,7 @@ Size=20     #C 20 The size of the sides of each square (in pixels)
 Cushion=5   #C 10 How far the board extends beyond the visible amount
 Edge=m.ceil(Size/7)    #C Size/15 The gap between each cell
 Paused=True #Does this need a description?
+OneTurn=False   #If game is paused this variable allows you to go forward one turn at a time
 Board=[]    #A 2d matrix representing the board
 Background=(120,120,120)    #C (120,120,120) The colour of the background
 Dead=0
@@ -67,7 +68,8 @@ Reset()
 print("""
 LEFT CLICK to make a Board "alive".\n
 RIGHT CLICK to Kill a cell.\n
-Press SPACE to pause/unpause the game.\n""")
+Press SPACE to pause/unpause the game.\n
+When paused, click RIGHT ARROW to go forward one turn.""")
 
 while True:
     for event in pg.event.get(): #Checks for SPACE input for pausing/unpausing
@@ -79,22 +81,25 @@ while True:
                 Paused = False
             else:
                 Paused = True
+        if pg.key.get_pressed()[pg.K_RIGHT]:
+            OneTurn=True
         if pg.mouse.get_pressed()[0]:
             Board[a][b].Birth(Square)
         if pg.mouse.get_pressed()[2]:
             Board[a][b].Kill()
-    if not Paused: 
+    if not Paused or ( OneTurn and Paused ):
+        if OneTurn:
+            OneTurn=False
         for a in range(1,Width+(2*Cushion)-1):      # Goes through all cells and kills
             for b in range(1,Height+(2*Cushion)-1): # those that will die and births
-                Fate=Check(a,b)                # those that will be born.
-                if Fate==0: #c is the next state and d is False if Cell wasn't
-                    Board[a][b].Kill()# "born" and the cell it turns into if
-                else: #it was "born".
+                Fate=Check(a,b)                     # those that will be born.
+                if Fate==0:
+                    Board[a][b].Kill()
+                else:
                     Board[a][b].Birth(Fate)
-    for a in range(Cushion,Width+Cushion):#This is seperate to when the values are
-        for b in range(Cushion,Height+Cushion):# changed because not all cells are
-##            if Board[a][b].CurrentState!=Board[a][b].NextState:# shown due to the
-            if Board[a][b].NextState==0:# cushion.
+    for a in range(Cushion,Width+Cushion):     #This is seperate to when the values
+        for b in range(Cushion,Height+Cushion):# are changed because not all
+            if Board[a][b].NextState==0:       # changed due to the cushion.
                 colour=(255,255,255)
             else:
                 colour=(0,0,0)
