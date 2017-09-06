@@ -88,7 +88,7 @@ while True:
                     Board[a][b].Birth(Fate)
     for a in range(Width+2*Cushion):
         for b in range(Height+2*Cushion):
-            if a>=Cushion and a<Width+Cushion and b>=Cushion and b<Width+Cushion:
+            if a>=Cushion and a<Width+Cushion and b>=Cushion and b<Height+Cushion:
                 if Board[a][b].NextState==0:
                     colour=(255,255,255)
                 else:
