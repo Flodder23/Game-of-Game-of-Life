@@ -20,3 +20,4 @@ Upcoming features:
     5-Light Weight Space Ship
     6-Tumbler
     7-Gosper Glider Gun\n
+  Press ESC to exit the window.
