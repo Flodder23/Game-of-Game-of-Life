@@ -42,6 +42,7 @@ def check(a, b):
 
 def clean_board():
     """Returns a new, blank board"""
+    # noinspection PyUnusedLocal
     return [[Cell() for a in range(config.Height + (2 * config.Cushion))] for b in
             range(config.Width + 2 * config.Cushion)]
 
@@ -54,6 +55,8 @@ def draw(state, a, b, colour):
     if state == config.Square:
         pygame.draw.rect(Screen, colour, (x, y, s, s))
 
+
+# noinspection PyShadowingNames
 def check_user_input(board, paused):
     """Checks for user input and acts accordingly"""
     one_turn = False
@@ -71,21 +74,23 @@ def check_user_input(board, paused):
             import sys
             sys.exit(0)
         if pygame.key.get_pressed()[pygame.K_1]:
-            preset.place(board, 1, a, b)
+            board = preset.place(board, 1, a, b)
         if pygame.key.get_pressed()[pygame.K_2]:
-            preset.place(board, 2, a, b)
+            board = preset.place(board, 2, a, b)
         if pygame.key.get_pressed()[pygame.K_3]:
-            preset.place(board, 3, a, b)
+            board = preset.place(board, 3, a, b)
         if pygame.key.get_pressed()[pygame.K_4]:
-            preset.place(board, 4, a, b)
+            board = preset.place(board, 4, a, b)
         if pygame.key.get_pressed()[pygame.K_5]:
-            preset.place(board, 5, a, b)
+            board = preset.place(board, 5, a, b)
         if pygame.key.get_pressed()[pygame.K_6]:
-            preset.place(board, 6, a, b)
+            board = preset.place(board, 6, a, b)
         if pygame.key.get_pressed()[pygame.K_7]:
-            preset.place(board, 7, a, b)
+            board = preset.place(board, 7, a, b)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             one_turn = True
+        if pygame.key.get_pressed()[pygame.K_RETURN]:
+            board = clean_board()
         if pygame.mouse.get_pressed()[0]:
             Board[a][b].birth(config.Square)
         if pygame.mouse.get_pressed()[2]:
