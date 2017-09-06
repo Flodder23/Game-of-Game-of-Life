@@ -8,4 +8,13 @@ controls are as follows:
   LEFT CLICK to make a Board "alive".
   RIGHT CLICK to Kill a cell.
   Press SPACE to pause/unpause the game.
+  Press ENTER to clear the board.
   When paused, click RIGHT ARROW to go forward one turn.
+  Presets (Press the corresponding number to place one):
+    1-Glider
+    2-Small Exploder
+    3-Exploder
+    4-Pentadecathlon
+    5-Light Weight Space Ship
+    6-Tumbler
+    7-Gosper Glider Gun\n
