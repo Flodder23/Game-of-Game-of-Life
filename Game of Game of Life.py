@@ -90,7 +90,7 @@ def check_user_input(board, paused):
             Board[a][b].birth(config.Square)
         if pygame.mouse.get_pressed()[2]:
             Board[a][b].kill()
-    return paused, one_turn
+    return board, paused, one_turn
 
 def take_turn(board):
     """Returns the given board as it will be after one turn; changes the NextState variables"""
@@ -130,8 +130,8 @@ Board = clean_board()
 Paused = True
 
 while True:
-    Paused, OneTurn = check_user_input(Board, Paused)  # If game is paused OneTurn allows you to go forward one turn at a time
-    if not Paused or (Paused and OneTurn):
+    Board, Paused, OneTurn = check_user_input(Board, Paused)    # If game is paused OneTurn allows you
+    if not Paused or (Paused and OneTurn):                      # to go forward one turn at a time
         if OneTurn:
             OneTurn = False
         Board = take_turn(Board)

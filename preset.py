@@ -3,10 +3,10 @@ import config
 def place(board, shape, a, b):
     """Places a preset shape."""
     if shape == 1:
-        if a + 2 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 3
-        if b + 2 >= config.Height + 2 * config.Cushion:
-            b = config.Height + 2 * config.Cushion - 3
+        if a + 2 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 3
+        if b + 2 >= config.Height + config.Cushion:
+            b = config.Height + config.Cushion - 3
         board[a][b].kill()
         board[a + 1][b].birth(config.Square)
         board[a + 2][b].kill()
@@ -18,10 +18,10 @@ def place(board, shape, a, b):
         board[a + 2][b + 2].birth(config.Square)
 
     elif shape == 2:
-        if a + 2 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 3
-        if b + 3 >= config.Height + 2 * config.Cushion:
-            b = config.Height + 2 * config.Cushion - 4
+        if a + 2 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 3
+        if b + 3 >= config.Height + config.Cushion:
+            b = config.Height + config.Cushion - 4
         board[a][b].kill()
         board[a + 1][b].birth(config.Square)
         board[a + 2][b].kill()
@@ -36,10 +36,10 @@ def place(board, shape, a, b):
         board[a + 2][b + 3].kill()
 
     elif shape == 3:
-        if a + 3 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 4
-        if b + 4 >= config.Height + 2 * config.Cushion:
-            b = config.Height + 2 * config.Cushion - 5
+        if a + 3 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 5
+        if b + 4 >= config.Height + config.Cushion:
+            b = config.Height + config.Cushion - 5
         for c in range(3):
             for d in range(5):
                 board[a + c + 1][b + d].kill()
@@ -49,16 +49,16 @@ def place(board, shape, a, b):
         board[a + 2][b + 4].birth(config.Square)
 
     elif shape == 4:
-        if a + 10 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 11
+        if a + 10 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 12
         for c in range(10):
             board[a + c][b].birth(config.Square)
 
     elif shape == 5:
-        if a + 5 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 6
-        if b + 4 >= config.Height + 2 * config.Cushion:
-            b = config.Height + 2 * config.Cushion - 5
+        if a + 5 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 5
+        if b + 4 >= config.Height + config.Cushion:
+            b = config.Height + config.Cushion - 4
         for c in range(5):
             for d in range(4):
                 board[a + c][b + d].kill()
@@ -71,10 +71,10 @@ def place(board, shape, a, b):
         board[a + 3][b + 3].birth(config.Square)
 
     elif shape == 6:
-        if a + 7 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 8
-        if b + 6 >= config.Height + 2 * config.Cushion:
-            b = config.Height + 2 * config.Cushion - 7
+        if a + 7 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 7
+        if b + 6 >= config.Height + config.Cushion:
+            b = config.Height + config.Cushion - 6
         for c in range(7):
             for d in range(6):
                 board[a + c][b + d].birth(config.Square)
@@ -100,10 +100,10 @@ def place(board, shape, a, b):
         board[a + 4][b + 5].kill()
 
     elif shape == 7:
-        if a + 38 >= config.Width + 2 * config.Cushion:
-            a = config.Width + 2 * config.Cushion - 39
-        if b + 15 >= config.Height + 2 * config.Cushion:
-            b = config.Height + 2 * config.Cushion - 16
+        if a + 38 >= config.Width + config.Cushion:
+            a = config.Width + config.Cushion - 38
+        if b + 15 >= config.Height + config.Cushion:
+            b = config.Height + config.Cushion - 15
         for c in range(38):
             for d in range(15):
                 board[a + c][b + d].kill()
