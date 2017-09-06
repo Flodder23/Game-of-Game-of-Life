@@ -1,18 +1,7 @@
 ### a,b refers to cell (a,b) whereas x,y refers to pixel coordinates ###
 
 import pygame as pg, math as m, time as t, random as r
-
-Width=50    #C 50 How many squares wide the board is
-Height=30   #C 30 Ditto but with height
-Size=20     #C 20 The size of the sides of each square (in pixels)
-Cushion=5   #C 10 How far the board extends beyond the visible amount
-Edge=m.ceil(Size/7)    #C Size/15 The gap between each cell
-Paused=True #Does this need a description?
-OneTurn=False   #If game is paused this variable allows you to go forward one turn at a time
-Board=[]    #A 2d matrix representing the board
-Background=(120,120,120)    #C (120,120,120) The colour of the background
-Dead=0
-Square=1
+from config import *
 
 class Cell():
     def __init__(self):
@@ -81,7 +70,9 @@ pg.init()
 Screen=pg.display.set_mode((Size*Width,Size*Height))
 Screen.fill(Background)
 pg.display.set_caption("Game of Life")
-Board=CleanBoard()
+Board=CleanBoard()#A 2d matrix representing the board
+Paused=True #Does this need a description?
+OneTurn=False   #If game is paused this variable allows you to go forward one turn at a time
 
 while True:
     CheckUserInput()
