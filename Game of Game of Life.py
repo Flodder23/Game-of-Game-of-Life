@@ -1,14 +1,15 @@
 ### a,b refers to cell (a,b) whereas x,y refers to pixel coordinates ###
 
-import pygame as pg, math as m, time as t, random as r
-from config import *
+import pygame
+import math as maths
+import config
 
 class Cell():
     def __init__(self):
-        self.CurrentState=1
-        self.NextState=0
+        self.CurrentState=config.Square
+        self.NextState=config.Dead
     def Kill(self):
-        self.NextState=0
+        self.NextState=config.Dead
     def Birth(self,Type):
         self.NextState=Type
 
@@ -25,74 +26,85 @@ def Check(a,b):
     total[Board[a-1][b-1].CurrentState]+=1
     total[Board[a+1][b-1].CurrentState]+=1
     total[Board[a-1][b+1].CurrentState]+=1
-    Next=0
-    if Type==0:
-        if total[0]==5:# if 5 dead cells; ie. if 3 alive cells
-            Next=1
-    if Type==Square:
-        if total[0]==5 or total[0]==6:
-            Next=1
+    Next=config.Dead
+    if Type==config.Dead:
+        if total[config.Dead]==5:# if 5 dead cells; ie. if 3 alive cells
+            Next=config.Square
+    if Type==config.Square:
+        if total[config.Dead]==5 or total[config.Dead]==6:
+            Next=config.Square
     return Next
 
 def CleanBoard():
-    return [[Cell()for a in range(Height+(2*Cushion))]for b in range(Width+2*Cushion)]
+    return [[Cell()for a in range(config.Height+(2*config.Cushion))]for b in range(config.Width+2*config.Cushion)]
 
 def Draw(Type,a,b,colour):
     """Draws a type of cell (Type) at the desired cell (a,b)"""
-    x=(a-Cushion)*Size+Edge/2
-    y=(b-Cushion)*Size+Edge/2
-    s=Size-Edge
-    pg.draw.rect(Screen,(255,255,255),(x,y,s,s))
+    x=(a-config.Cushion)*config.Size+config.Edge/2
+    y=(b-config.Cushion)*config.Size+config.Edge/2
+    s=config.Size-config.Edge
+    pygame.draw.rect(Screen,(255,255,255),(x,y,s,s))
+    if Type==config.Square:
+        pygame.draw.rect(Screen,colour,(x,y,s,s))
 
-    if Type==Square:
-        pg.draw.rect(Screen,colour,(x,y,s,s))
-
-def CheckUserInput():
-    global Paused
-    global OneTurn
-    for event in pg.event.get():
-        x,y=pg.mouse.get_pos()
-        a=m.floor(x/Size)+Cushion
-        b=m.floor(y/Size)+Cushion
-        if pg.key.get_pressed()[pg.K_SPACE]:
+def CheckUserInput(Paused):
+    OneTurn=False
+    for event in pygame.event.get():
+        x,y=pygame.mouse.get_pos()
+        a=maths.floor(x/config.Size)+config.Cushion
+        b=maths.floor(y/config.Size)+config.Cushion
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
             if Paused:
                 Paused = False
             else:
                 Paused = True
-        if pg.key.get_pressed()[pg.K_RIGHT]:
+        if pygame.key.get_pressed()[pygame.K_RIGHT]:
             OneTurn=True
-        if pg.mouse.get_pressed()[0]:
-            Board[a][b].Birth(Square)
-        if pg.mouse.get_pressed()[2]:
+        if pygame.mouse.get_pressed()[0]:
+            Board[a][b].Birth(config.Square)
+        if pygame.mouse.get_pressed()[2]:
             Board[a][b].Kill()
+    return Paused, OneTurn
 
-pg.init()
-Screen=pg.display.set_mode((Size*Width,Size*Height))
-Screen.fill(Background)
-pg.display.set_caption("Game of Life")
-Board=CleanBoard()#A 2d matrix representing the board
-Paused=True #Does this need a description?
-OneTurn=False   #If game is paused this variable allows you to go forward one turn at a time
-
-while True:
-    CheckUserInput()
-    if not Paused or ( OneTurn and Paused ):
-        if OneTurn:
-            OneTurn=False
-        for a in range(1,Width+(2*Cushion)-1):      # Goes through all cells and kills
-            for b in range(1,Height+(2*Cushion)-1): # those that will die and births
+def TakeTurn(Board):
+    for a in range(1,config.Width+(2*config.Cushion)-1):      # Goes through all cells and kills
+            for b in range(1,config.Height+(2*config.Cushion)-1): # those that will die and births
                 Fate=Check(a,b)                     # those that will be born.
-                if Fate==0:
+                if Fate==config.Dead:
                     Board[a][b].Kill()
                 else:
                     Board[a][b].Birth(Fate)
-    for a in range(Width+2*Cushion):
-        for b in range(Height+2*Cushion):
-            if a>=Cushion and a<Width+Cushion and b>=Cushion and b<Height+Cushion:
-                if Board[a][b].NextState==0:
-                    colour=(255,255,255)
-                else:
-                    colour=(0,0,0)
-                Draw(Board[a][b].NextState,a,b,colour) #Draws the cell as desired
+    return Board
+
+def DrawBoard():
+    for a in range(config.Cushion,config.Cushion+config.Width):
+        for b in range(config.Cushion,config.Cushion+config.Height):
+            if Board[a][b].NextState==config.Dead:
+                colour=(255,255,255)
+            else:
+                colour=(0,0,0)
+            Draw(Board[a][b].NextState,a,b,colour) #Draws the cell as desired
+
+def UpdateBoard(Board):
+    for a in range(config.Width+2*config.Cushion):
+        for b in range(config.Height+2*config.Cushion):
             Board[a][b].CurrentState=Board[a][b].NextState
-    pg.display.update ()
+    pygame.display.update ()
+    return Board
+
+pygame.init()
+Screen=pygame.display.set_mode((config.Size*config.Width,config.Size*config.Height))
+Screen.fill(config.Background)
+pygame.display.set_caption("Game of Life")
+Board=CleanBoard()
+Paused=True
+
+while True:
+    Paused, OneTurn=CheckUserInput(Paused)#If game is paused OneTurn allows you to go forward one turn at a time
+    if not Paused or (Paused and OneTurn):
+        if OneTurn:
+            OneTurn=False
+        Board=TakeTurn(Board)
+    DrawBoard()
+    Board=UpdateBoard(Board)
+        
