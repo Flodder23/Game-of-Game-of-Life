@@ -81,8 +81,10 @@ def check_user_input(board, paused, fps):
             one_turn = True
         if pygame.key.get_pressed()[pygame.K_RETURN]:
             board = clean_board()
+            global Generations
+            Generations = 0
         if pygame.mouse.get_pressed()[0]:
-            if config.Size * config.Width + config.Edge / 2 < x < config.Size * config.Width + config.ButtonSize +\
+            if config.Size * config.Width + config.Edge / 2 < x < config.Size * config.Width + config.ButtonSize + \
                             config.Edge / 2:  # within the button+FPS slider area
                 if y < config.StartOfSlider:
                     y = config.StartOfSlider
@@ -99,6 +101,7 @@ def check_user_input(board, paused, fps):
 
 def draw_board():
     """Draws the board"""
+    pygame.display.set_caption("Game of Life - Generation " + str(Generations))
     for a in range(config.Cushion, config.Cushion + config.Width):
         for b in range(config.Cushion, config.Cushion + config.Height):
             if Board[a][b].NextState == config.Dead:
@@ -140,8 +143,8 @@ def draw_fps_slider(n):
     elif n > e:
         n = e
     pygame.draw.rect(Screen, config.Background, ((c + config.NotchLength / 2, d - config.NotchLength),
-                                                        (config.Width * config.Size + config.Edge + config.Border +
-                                                         config.ButtonSize, e)))
+                                                 (config.Width * config.Size + config.Edge + config.Border +
+                                                  config.ButtonSize, e)))
     pygame.draw.line(Screen, (180, 180, 180), (c, d), (c, e))
     f = (e - d) / config.Notches  # How far each notch goes
     for g in range(config.Notches + 1):
@@ -162,21 +165,22 @@ def draw_fps_slider(n):
 pygame.init()
 Screen = pygame.display.set_mode((config.Size * config.Width + config.ButtonSize, config.Size * config.Height))
 Screen.fill(config.Background)
-pygame.display.set_caption("Game of Life")
 Board = clean_board()
 Paused = True
 FPS = 10
-draw_fps_slider(((maths.log(FPS,10)+1)/-3)*(config.EndOfSlider-config.StartOfSlider)+config.EndOfSlider)
+draw_fps_slider(((maths.log(FPS, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) + config.EndOfSlider)
 LastFrame = time.time()  # The time when the last frame update happened.
+Generations = 0
 
 while True:
     Board, Paused, OneTurn, FPS = check_user_input(Board, Paused, FPS)  # If game is paused OneTurn allows you
     Board = update_board(Board)  # to go forward one turn at a time
-    if (not Paused or (Paused and OneTurn)) and time.time() - LastFrame > 0.95/FPS:
+    if (not Paused or (Paused and OneTurn)) and time.time() - LastFrame > 0.95 / FPS:
         if OneTurn:
             OneTurn = False
         Board = take_turn(Board)
         Board = update_board(Board)
         LastFrame = time.time()
+        Generations += 1
     draw_board()
     pygame.display.update()
