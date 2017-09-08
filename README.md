@@ -9,8 +9,6 @@ Controls are as follows:
   RIGHT CLICK to Kill a cell.
   Press SPACE to pause/unpause the game.
   Press RIGHT Arrow to move forward a turn when paused.
-
-Upcoming features:
   Press ENTER to clear the board.
   Presets (Press the corresponding number to place one):
     1-Glider
