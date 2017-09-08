@@ -40,11 +40,13 @@ def check(a, b):
             new = config.Square
     return new
 
+
 def clean_board():
     """Returns a new, blank board"""
     # noinspection PyUnusedLocal
     return [[Cell() for a in range(config.Height + (2 * config.Cushion))] for b in
             range(config.Width + 2 * config.Cushion)]
+
 
 def draw(state, a, b, colour):
     """Draws a type of cell (Type) at the desired cell (a,b)"""
@@ -73,29 +75,30 @@ def check_user_input(board, paused):
             pygame.quit()
             import sys
             sys.exit(0)
-        if pygame.key.get_pressed()[pygame.K_1]:
-            board = preset.place(board, 1, a, b)
-        if pygame.key.get_pressed()[pygame.K_2]:
-            board = preset.place(board, 2, a, b)
-        if pygame.key.get_pressed()[pygame.K_3]:
-            board = preset.place(board, 3, a, b)
-        if pygame.key.get_pressed()[pygame.K_4]:
-            board = preset.place(board, 4, a, b)
-        if pygame.key.get_pressed()[pygame.K_5]:
-            board = preset.place(board, 5, a, b)
-        if pygame.key.get_pressed()[pygame.K_6]:
-            board = preset.place(board, 6, a, b)
-        if pygame.key.get_pressed()[pygame.K_7]:
-            board = preset.place(board, 7, a, b)
+        for key in range(pygame.K_1, pygame.K_8):
+            if pygame.key.get_pressed()[key]:
+                board = preset.place(board, int(pygame.key.name(key)), a, b)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             one_turn = True
         if pygame.key.get_pressed()[pygame.K_RETURN]:
             board = clean_board()
         if pygame.mouse.get_pressed()[0]:
-            Board[a][b].birth(config.Square)
+            board[a][b].birth(config.Square)
         if pygame.mouse.get_pressed()[2]:
-            Board[a][b].kill()
+            board[a][b].kill()
     return board, paused, one_turn
+
+
+def draw_board():
+    """Draws the board"""
+    for a in range(config.Cushion, config.Cushion + config.Width):
+        for b in range(config.Cushion, config.Cushion + config.Height):
+            if Board[a][b].NextState == config.Dead:
+                colour = (255, 255, 255)
+            else:
+                colour = (0, 0, 0)
+            draw(Board[a][b].NextState, a, b, colour)  # Draws the cell as desired
+
 
 def take_turn(board):
     """Returns the given board as it will be after one turn; changes the NextState variables"""
@@ -108,22 +111,12 @@ def take_turn(board):
                 board[a][b].birth(fate)
     return board
 
-def draw_board():
-    """Draws the board"""
-    for a in range(config.Cushion, config.Cushion + config.Width):
-        for b in range(config.Cushion, config.Cushion + config.Height):
-            if Board[a][b].NextState == config.Dead:
-                colour = (255, 255, 255)
-            else:
-                colour = (0, 0, 0)
-            draw(Board[a][b].NextState, a, b, colour)  # Draws the cell as desired
 
 def update_board(board):
     """Updates the given board and returns it; puts NextState values in CurrentState"""
     for a in range(config.Width + 2 * config.Cushion):
         for b in range(config.Height + 2 * config.Cushion):
             board[a][b].CurrentState = board[a][b].NextState
-    pygame.display.update()
     return board
 
 
@@ -135,10 +128,12 @@ Board = clean_board()
 Paused = True
 
 while True:
-    Board, Paused, OneTurn = check_user_input(Board, Paused)    # If game is paused OneTurn allows you
-    if not Paused or (Paused and OneTurn):                      # to go forward one turn at a time
+    Board, Paused, OneTurn = check_user_input(Board, Paused)  # If game is paused OneTurn allows you
+    Board = update_board(Board)                                 # to go forward one turn at a time
+    if not Paused or (Paused and OneTurn):
         if OneTurn:
             OneTurn = False
         Board = take_turn(Board)
+        Board = update_board(Board)
     draw_board()
-    board = update_board(Board)
+    pygame.display.update()
