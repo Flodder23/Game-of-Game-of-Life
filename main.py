@@ -58,7 +58,7 @@ def draw(state, a, b, colour):
         pygame.draw.rect(Screen, colour, (x, y, s, s))
 
 
-def check_user_input(board, paused, fps):
+def check_user_input(board, paused, fps, fps_limit):
     """Checks for user input and acts accordingly"""
     one_turn = False
     for event in pygame.event.get():
@@ -77,6 +77,13 @@ def check_user_input(board, paused, fps):
         for key in range(pygame.K_1, pygame.K_8):
             if pygame.key.get_pressed()[key]:
                 board = preset.place(board, int(pygame.key.name(key)), a, b)
+        if pygame.key.get_pressed()[pygame.K_f]:
+            if fps_limit:
+                fps_limit = False
+            else:
+                fps_limit = True
+            draw_fps_slider(((maths.log(fps, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) +
+                            config.EndOfSlider, fps_limit)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             one_turn = True
         if pygame.key.get_pressed()[pygame.K_RETURN]:
@@ -90,13 +97,13 @@ def check_user_input(board, paused, fps):
                     y = config.StartOfSlider
                 elif y > config.EndOfSlider:
                     y = config.EndOfSlider
-                draw_fps_slider(y)
+                draw_fps_slider(y, fps_limit)
                 fps = 10 ** (3 * (config.EndOfSlider - y) / (config.EndOfSlider - config.StartOfSlider) - 1)
             else:
                 Board[a][b].birth(config.Square)
         if pygame.mouse.get_pressed()[2]:
             board[a][b].kill()
-    return board, paused, one_turn, fps
+    return board, paused, one_turn, fps, fps_limit
 
 
 def draw_board():
@@ -132,16 +139,16 @@ def update_board(board):
     return board
 
 
-def draw_fps_slider(n):
-    """Draws the slider with n being the y coordinate of the button click
+def draw_fps_slider(y, fps_limit):
+    """Draws the slider with the y coordinate of the button click
        (How many FPS this corresponds to is not dealt with here.)"""
     c = config.Size * config.Width + config.Edge / 2 + config.ButtonSize / 2  # The middle of the line of buttons
     d = config.StartOfSlider
     e = config.EndOfSlider
-    if n < d:
-        n = d
-    elif n > e:
-        n = e
+    if y < d:
+        y = d
+    elif y > e:
+        y = e
     pygame.draw.rect(Screen, config.Background, ((c + config.NotchLength / 2, d - config.NotchLength),
                                                  (config.Width * config.Size + config.Edge + config.Border +
                                                   config.ButtonSize, e)))
@@ -155,11 +162,15 @@ def draw_fps_slider(n):
     config.write(Screen, c - config.ButtonSize * 0.48 + 10, d + 6 * f - 6, "1", (180, 180, 180), 12)
     config.write(Screen, c - config.ButtonSize * 0.48, d + 3 * f - 6, "10", (180, 180, 180), 12)
     config.write(Screen, c - config.ButtonSize * 0.48 - 2, d - 6, "100", (180, 180, 180), 12)
-    pygame.draw.polygon(Screen, (0, 255, 100), ((c + config.NotchLength / 2, n),
-                                                (c + config.NotchLength, n - config.NotchLength / 2),
-                                                (c + 2 * config.NotchLength, n - config.NotchLength / 2),
-                                                (c + 2 * config.NotchLength, n + config.NotchLength / 2),
-                                                (c + config.NotchLength, n + config.NotchLength / 2)))
+    if fps_limit:
+        colour = (0, 255, 100)
+    else:
+        colour = (160, 160, 160)
+    pygame.draw.polygon(Screen, colour, ((c + config.NotchLength / 2, y),
+                                         (c + config.NotchLength, y - config.NotchLength / 2),
+                                         (c + 2 * config.NotchLength, y - config.NotchLength / 2),
+                                         (c + 2 * config.NotchLength, y + config.NotchLength / 2),
+                                         (c + config.NotchLength, y + config.NotchLength / 2)))
 
 
 pygame.init()
@@ -168,14 +179,16 @@ Screen.fill(config.Background)
 Board = clean_board()
 Paused = True
 FPS = 10
-draw_fps_slider(((maths.log(FPS, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) + config.EndOfSlider)
+FPSLimit = True
+draw_fps_slider(((maths.log(FPS, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) + config.EndOfSlider,
+                FPSLimit)
 LastFrame = time.time()  # The time when the last frame update happened.
 Generations = 0
 
 while True:
-    Board, Paused, OneTurn, FPS = check_user_input(Board, Paused, FPS)  # If game is paused OneTurn allows you
-    Board = update_board(Board)  # to go forward one turn at a time
-    if (not Paused or (Paused and OneTurn)) and time.time() - LastFrame > 0.95 / FPS:
+    Board, Paused, OneTurn, FPS, FPSLimit = check_user_input(Board, Paused, FPS, FPSLimit)
+    Board = update_board(Board)
+    if (not Paused or (Paused and OneTurn)) and ((not FPSLimit) or time.time() - LastFrame > 0.95 / FPS):
         if OneTurn:
             OneTurn = False
         Board = take_turn(Board)
