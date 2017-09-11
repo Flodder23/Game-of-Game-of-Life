@@ -25,23 +25,23 @@ def check(a, b):
     and if so what type it will be"""
     state = Board[a][b].CurrentState
     total = [0, 0]
-    aa = a - 1
-    ab = a + 1
-    ba = b - 1
-    bb = b + 1
+    al = a - 1  # a left (neighbour)
+    ar = a + 1  # a right
+    bu = b - 1  # b up
+    bd = b + 1  # b down
     if config.Wrap and a == config.Width-1:
-        ab = 0
+        ar = 0
     if config.Wrap and b == config.Height-1:
-        bb = 0
+        bd = 0
 
-    total[Board[aa][b].CurrentState] += 1
-    total[Board[a][ba].CurrentState] += 1
-    total[Board[ab][b].CurrentState] += 1
-    total[Board[a][bb].CurrentState] += 1
-    total[Board[aa][ba].CurrentState] += 1
-    total[Board[ab][ba].CurrentState] += 1
-    total[Board[aa][bb].CurrentState] += 1
-    total[Board[ab][bb].CurrentState] += 1
+    total[Board[al][b].CurrentState] += 1
+    total[Board[a][bu].CurrentState] += 1
+    total[Board[ar][b].CurrentState] += 1
+    total[Board[a][bd].CurrentState] += 1
+    total[Board[al][bu].CurrentState] += 1
+    total[Board[ar][bu].CurrentState] += 1
+    total[Board[al][bd].CurrentState] += 1
+    total[Board[ar][bd].CurrentState] += 1
     new = config.Dead
     if state == config.Dead:
         if total[config.Dead] == 5:  # if 5 dead cells; ie. if 3 alive cells
@@ -84,6 +84,8 @@ def check_user_input(board, paused, gps, gps_limit):
         for key in range(pygame.K_1, pygame.K_8):
             if pygame.key.get_pressed()[key]:
                 board = preset.place(board, int(pygame.key.name(key)), a, b)
+                board = update_board(board)
+                draw_board(board)
         if pygame.key.get_pressed()[pygame.K_f]:
             gps_limit = not gps_limit
             draw_gps_slider(((maths.log(gps, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) +
@@ -92,6 +94,8 @@ def check_user_input(board, paused, gps, gps_limit):
             one_turn = True
         if pygame.key.get_pressed()[pygame.K_RETURN]:
             board = clean_board()
+            board = update_board(board)
+            draw_board(board)
             global Generations
             Generations = 0
         if pygame.mouse.get_pressed()[0]:
@@ -108,21 +112,26 @@ def check_user_input(board, paused, gps, gps_limit):
                                          (config.EndOfSlider - config.StartOfSlider)) + min_gps_log)
             elif 0 <= a < config.Width + config.Cushion and 0 <= b < config.Height + config.Cushion:
                 Board[a][b].birth(config.Square)
+                board = update_board(board)
+                draw_board(board)
         if pygame.mouse.get_pressed()[2]:
             board[a][b].kill()
+            board = update_board(board)
+            draw_board(board)
     return board, paused, one_turn, gps, gps_limit
 
 
-def draw_board():
+def draw_board(board):
     """Draws the board"""
     pygame.display.set_caption("Game of Life - Generation " + str(Generations))
     for a in range(config.Cushion, config.Cushion + config.Width):
         for b in range(config.Cushion, config.Cushion + config.Height):
-            if Board[a][b].NextState == config.Dead:
+            if board[a][b].NextState == config.Dead:
                 colour = (255, 255, 255)
             else:
                 colour = (0, 0, 0)
-            draw(Board[a][b].NextState, a, b, colour)  # Draws the cell as desired
+            draw(board[a][b].NextState, a, b, colour)  # Draws the cell as desired
+    pygame.display.update()
 
 
 def take_turn(board):
@@ -178,6 +187,7 @@ def draw_gps_slider(y, gps_limit):
                                          (config.SliderY + 2 * config.NotchLength, y - config.NotchLength / 2),
                                          (config.SliderY + 2 * config.NotchLength, y + config.NotchLength / 2),
                                          (config.SliderY + config.NotchLength, y + config.NotchLength / 2)))
+    pygame.display.update()
 
 
 pygame.init()
@@ -191,12 +201,12 @@ draw_gps_slider(((maths.log(GPS, 10) + 1) / -3) * (config.EndOfSlider - config.S
                 GPSLimit)
 LastFrame = time.time()  # The time when the last frame update happened.
 Generations = 0
-
 for _ in range(int(config.Width * config.Height / 5)):
     rx = random.randint(config.Cushion, config.Cushion + config.Width - 1)
     ry = random.randint(config.Cushion, config.Cushion + config.Height - 1)
     Board[rx][ry].CurrentState = 0
     Board[rx][ry].birth(config.Square)  # random.randint(0, config.NoOfButtons - 1))
+draw_board(Board)
 
 while True:
     Board, Paused, OneTurn, GPS, GPSLimit = check_user_input(Board, Paused, GPS, GPSLimit)
@@ -206,7 +216,6 @@ while True:
             OneTurn = False
         Board = take_turn(Board)
         Board = update_board(Board)
-        LastFrame = time.time()
         Generations += 1
-    draw_board()
-    pygame.display.update()
+        draw_board(Board)
+        LastFrame = time.time()
