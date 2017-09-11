@@ -68,13 +68,13 @@ def draw(state, a, b, colour):
         pygame.draw.rect(Screen, colour, (x, y, s, s))
 
 
-def check_user_input(board, paused, fps, fps_limit):
+def check_user_input(board, paused, gps, gps_limit):
     """Checks for user input and acts accordingly"""
     one_turn = False
     for event in pygame.event.get():
         x, y = pygame.mouse.get_pos()
-        a = maths.floor(x / config.Size) + config.Cushion
-        b = maths.floor(y / config.Size) + config.Cushion
+        a = x // config.Size + config.Cushion
+        b = y // config.Size + config.Cushion
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             paused = not paused
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
@@ -85,9 +85,9 @@ def check_user_input(board, paused, fps, fps_limit):
             if pygame.key.get_pressed()[key]:
                 board = preset.place(board, int(pygame.key.name(key)), a, b)
         if pygame.key.get_pressed()[pygame.K_f]:
-            fps_limit = not fps_limit
-            draw_fps_slider(((maths.log(fps, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) +
-                            config.EndOfSlider, fps_limit)
+            gps_limit = not gps_limit
+            draw_gps_slider(((maths.log(gps, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) +
+                            config.EndOfSlider, gps_limit)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             one_turn = True
         if pygame.key.get_pressed()[pygame.K_RETURN]:
@@ -96,21 +96,21 @@ def check_user_input(board, paused, fps, fps_limit):
             Generations = 0
         if pygame.mouse.get_pressed()[0]:
             if config.Size * config.Width + config.Edge / 2 < x < config.Size * config.Width + config.ButtonSize + \
-                            config.Edge / 2:  # within the button+FPS slider area
+                            config.Edge / 2:  # within the button+GPS slider area
                 if y < config.StartOfSlider:
                     y = config.StartOfSlider
                 elif y > config.EndOfSlider:
                     y = config.EndOfSlider
-                fps_limit = True
-                draw_fps_slider(y, fps_limit)
-                min_fps_log = maths.log(config.MinFPS, config.MaxFPS)
-                fps = config.MaxFPS ** (((1 - min_fps_log) * (config.EndOfSlider - y) /
-                                         (config.EndOfSlider - config.StartOfSlider)) + min_fps_log)
-            elif 0 <= a < config.Width and 0 <= b < config.Height:
+                gps_limit = True
+                draw_gps_slider(y, gps_limit)
+                min_gps_log = maths.log(config.MinGPS, config.MaxGPS)
+                gps = config.MaxGPS ** (((1 - min_gps_log) * (config.EndOfSlider - y) /
+                                         (config.EndOfSlider - config.StartOfSlider)) + min_gps_log)
+            elif 0 <= a < config.Width + config.Cushion and 0 <= b < config.Height + config.Cushion:
                 Board[a][b].birth(config.Square)
         if pygame.mouse.get_pressed()[2]:
             board[a][b].kill()
-    return board, paused, one_turn, fps, fps_limit
+    return board, paused, one_turn, gps, gps_limit
 
 
 def draw_board():
@@ -149,35 +149,35 @@ def update_board(board):
     return board
 
 
-def draw_fps_slider(y, fps_limit):
+def draw_gps_slider(y, gps_limit):
     """Draws the slider with the y coordinate of the button click
-       (How many FPS this corresponds to is not dealt with here.)"""
-    c = config.Size * config.Width + config.Edge / 2 + config.ButtonSize / 2  # The middle of the line of buttons
-    d = config.StartOfSlider
-    e = config.EndOfSlider
-    if y < d:
-        y = d
-    elif y > e:
-        y = e
-    pygame.draw.rect(Screen, config.Background, ((c + config.NotchLength / 2, d - config.NotchLength),
-                                                 (config.Width * config.Size + config.Edge + config.Border +
-                                                  config.ButtonSize, e)))
-    pygame.draw.line(Screen, (180, 180, 180), (c, d), (c, e))
-    f = (e - d) / config.Notches  # How far each notch goes
-    for g in range(config.Notches + 1):
-        pygame.draw.line(Screen, (180, 180, 180), (c - config.NotchLength / 2, d + g * f),
-                         (c + config.NotchLength / 2, d + g * f))
-    config.write(Screen, c - (12 + config.NotchLength), (d + e) * 0.5, "Speed", (180, 180, 180), 20,
+       (How many GPS this corresponds to is not dealt with here.)"""
+    if y < config.StartOfSlider:
+        y = config.StartOfSlider
+    elif y > config.EndOfSlider:
+        y = config.EndOfSlider
+    pygame.draw.rect(Screen, config.Background, ((config.ButtonStart, config.StartOfSlider - config.NotchLength),
+                                                 (config.ButtonStart + config.Edge + config.Border +
+                                                  config.ButtonSize, config.EndOfSlider)))
+    pygame.draw.line(Screen, (180, 180, 180), (config.SliderY, config.StartOfSlider), (config.SliderY,
+                                                                                       config.EndOfSlider))
+    for n in range(config.Notches):
+        pygame.draw.line(Screen, (180, 180, 180), (config.SliderY - config.NotchLength / 2,
+                                                   config.StartOfSlider + n * config.SpaceBetweenNotches),
+                         (config.SliderY + config.NotchLength / 2,
+                          config.StartOfSlider + n * config.SpaceBetweenNotches))
+    config.write(Screen, config.SliderY - (12 + config.NotchLength), (config.StartOfSlider + config.EndOfSlider) * 0.5,
+                 "Speed", (180, 180, 180), 20,
                  rotate=90, alignment=("left", "centre"))
-    if fps_limit:
+    if gps_limit:
         colour = (0, 255, 100)
     else:
         colour = (160, 160, 160)
-    pygame.draw.polygon(Screen, colour, ((c + config.NotchLength / 2, y),
-                                         (c + config.NotchLength, y - config.NotchLength / 2),
-                                         (c + 2 * config.NotchLength, y - config.NotchLength / 2),
-                                         (c + 2 * config.NotchLength, y + config.NotchLength / 2),
-                                         (c + config.NotchLength, y + config.NotchLength / 2)))
+    pygame.draw.polygon(Screen, colour, ((config.SliderY + config.NotchLength / 2, y),
+                                         (config.SliderY + config.NotchLength, y - config.NotchLength / 2),
+                                         (config.SliderY + 2 * config.NotchLength, y - config.NotchLength / 2),
+                                         (config.SliderY + 2 * config.NotchLength, y + config.NotchLength / 2),
+                                         (config.SliderY + config.NotchLength, y + config.NotchLength / 2)))
 
 
 pygame.init()
@@ -185,10 +185,10 @@ Screen = pygame.display.set_mode((config.Size * config.Width + config.ButtonSize
 Screen.fill(config.Background)
 Board = clean_board()
 Paused = True
-FPS = 10
-FPSLimit = True
-draw_fps_slider(((maths.log(FPS, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) + config.EndOfSlider,
-                FPSLimit)
+GPS = 10
+GPSLimit = True
+draw_gps_slider(((maths.log(GPS, 10) + 1) / -3) * (config.EndOfSlider - config.StartOfSlider) + config.EndOfSlider,
+                GPSLimit)
 LastFrame = time.time()  # The time when the last frame update happened.
 Generations = 0
 
@@ -199,9 +199,9 @@ for _ in range(int(config.Width * config.Height / 5)):
     Board[rx][ry].birth(config.Square)  # random.randint(0, config.NoOfButtons - 1))
 
 while True:
-    Board, Paused, OneTurn, FPS, FPSLimit = check_user_input(Board, Paused, FPS, FPSLimit)
+    Board, Paused, OneTurn, GPS, GPSLimit = check_user_input(Board, Paused, GPS, GPSLimit)
     Board = update_board(Board)
-    if (not Paused or (Paused and OneTurn)) and ((not FPSLimit) or time.time() - LastFrame > 1 / FPS):
+    if (not Paused or (Paused and OneTurn)) and ((not GPSLimit) or time.time() - LastFrame > 1 / GPS):
         if OneTurn:
             OneTurn = False
         Board = take_turn(Board)

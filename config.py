@@ -15,16 +15,26 @@ Background = (120, 120, 120)  # C (120,120,120) The colour of the background
 Dead = 0
 Square = 1
 NoOfButtons = 0
-ButtonSize = 55  # The space at the end currently with the FPS slider but will also include Buttons (hence the name)
+ButtonSize = 55  # The space at the end currently with the GPS slider but will also include Buttons (hence the name)
 Border = 5  # C 5 How much bigger (each side) the highlighter to show selected input on Buttons.
-FPS = 10  # C 5 How many FPS
-MaxFPS = 100  # C
-MinFPS = 0.5  # C
-Notches = 9  # C 9 How many notches on the FPS slider
-NotchLength = ButtonSize / 5  # C ButtonSize/5 The length of each notch on the FPS slider
-StartOfSlider = NoOfButtons * ButtonSize + Border + 2 * NotchLength  # Top of FPS slider (y coordinate)
-EndOfSlider = Height * Size - Border - NotchLength  # Bottom of FPS slider (y coordinate)
-
+GPS = 10  # C 5 How many Generations Per Second
+MaxGPS = 100  # C
+MinGPS = 0.5  # C
+Notches = 9  # C 9 How many notches on the GPS slider
+NotchLength = ButtonSize / 5  # C ButtonSize/5 The length of each notch on the GPS slider
+StartOfSlider = NoOfButtons * ButtonSize + Border + 2 * NotchLength  # Top of GPS slider (y coordinate)
+EndOfSlider = Height * Size - Border - NotchLength  # Bottom of GPS slider (y coordinate)
+MidOfSlider = (StartOfSlider+ + EndOfSlider) / 2
+SpaceBetweenNotches = (EndOfSlider-StartOfSlider) / (Notches-1)
+ButtonStart = Size * Width
+SliderY = Size * Width + Edge / 2 + ButtonSize / 2
+Colour = {"Alive": (0, 0, 0),
+          "Player1": (0, 255, 100),
+          "Player2": (0, 100, 255),
+          "Player3": (100, 255, 0),
+          "Player4": (100, 0, 255),
+          "Dead": (255, 255, 255),
+          "Highlighter": (0, 255, 100)}
 
 def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top")):
     """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
