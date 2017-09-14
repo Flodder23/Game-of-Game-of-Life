@@ -1,40 +1,70 @@
 import pygame
-import math as maths
-import time
 
-Width = 50  # C 50 How many squares wide the board is
-Height = 30  # C 30 Ditto but with height
-Size = 20  # C 20 The size of the sides of each square (in pixels)
-Wrap = False #Board wraps around on itself
-if Wrap:
-    Cushion = 0
-else:
-    Cushion = 10  # C 10 How far the board extends beyond the visible amount
-Edge = maths.ceil(Size / 7)  # C Size/15 The gap between each cell
-Background = (120, 120, 120)  # C (120,120,120) The colour of the background
 Dead = 0
 Square = 1
-NoOfButtons = 0
-ButtonSize = 55  # The space at the end currently with the GPS slider but will also include Buttons (hence the name)
-Border = 5  # C 5 How much bigger (each side) the highlighter to show selected input on Buttons.
-GPS = 10  # C 5 How many Generations Per Second
-MaxGPS = 100  # C
-MinGPS = 0.5  # C
-Notches = 9  # C 9 How many notches on the GPS slider
-NotchLength = ButtonSize / 5  # C ButtonSize/5 The length of each notch on the GPS slider
-StartOfSlider = NoOfButtons * ButtonSize + Border + 2 * NotchLength  # Top of GPS slider (y coordinate)
-EndOfSlider = Height * Size - Border - NotchLength  # Bottom of GPS slider (y coordinate)
-MidOfSlider = (StartOfSlider+ + EndOfSlider) / 2
-SpaceBetweenNotches = (EndOfSlider-StartOfSlider) / (Notches-1)
-ButtonStart = Size * Width
-SliderY = Size * Width + Edge / 2 + ButtonSize / 2
-Colour = {"Alive": (0, 0, 0),
-          "Player1": (0, 255, 100),
-          "Player2": (0, 100, 255),
-          "Player3": (100, 255, 0),
-          "Player4": (100, 0, 255),
-          "Dead": (255, 255, 255),
-          "Highlighter": (0, 255, 100)}
+
+class cell:
+    def __init__(self):
+        self.CurrentState = Square
+        self.NextState = Dead
+
+    def kill(self):
+        self.NextState = Dead
+
+    def birth(self, state):
+        self.NextState = state
+
+
+class Board:
+    def __init__(self):  # customisable, default_value, description
+        self.Width = 50  # C 50 How many squares wide the board is
+        self.Height = 30  # C 30 Ditto but with height
+        self.Size = 20  # C 20 The size of the sides of each square (in pixels)
+        self.Wrap = False  # Whether the board wraps around on itself
+        self.Edge = self.Size // 7  # C self.Size / 15 The gap between each cell
+        self.Generations = 0
+        if self.Wrap:
+            self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
+        else:
+            self.Cushion = 10
+        self.Cell = [[cell() for _ in range(self.Height + (2 * self.Cushion))] for _ in range(self.Width + 2 *
+                                                                                              self.Cushion)]
+B = Board()
+
+
+class GameState:
+    def __init__(self):
+        self.GPS = 10  # C 10 How many Generations Per Seconds
+        self.MaxGPS = 0.5
+        self.MinGPS = 100
+        self.GPSLimit = True
+        self.Paused = True
+        self.OneTurn = False
+        self.Colour = {"Alive": (0, 0, 0),
+                       "Player1": (0, 255, 100),
+                       "Player2": (0, 100, 255),
+                       "Player3": (100, 255, 0),
+                       "Player4": (100, 0, 255),
+                       "Dead": (255, 255, 255),
+                       "Highlighter": (0, 255, 100),
+                       "Background": (120, 120, 120),
+                       "Text": (180, 180, 180),
+                       "Unselected": (160, 160, 160)}
+
+
+class Widgets:
+    def __init__(self):
+        self.NoOfButtons = 0
+        self.ButtonSize = 50
+        self.HighlightSize = 5
+        self.NoOfNotches = 9
+        self.NotchLength = self.ButtonSize/5
+        self.StartOfSlider = self.NoOfButtons * self.ButtonSize + self.HighlightSize + 2 * self.NotchLength
+        self.EndOfSlider = B.Height * B.Size - self.HighlightSize - self.NotchLength
+        self.SpaceBetweenNotches = (self.EndOfSlider-self.StartOfSlider) / (self.NoOfNotches-1)
+        self.ButtonStart = B.Size * B.Width
+        self.SliderY = B.Size * B.Width + B.Edge / 2 + self.ButtonSize / 2
+
 
 def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top")):
     """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
