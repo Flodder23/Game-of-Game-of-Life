@@ -70,9 +70,13 @@ def check_user_input(board, game_state):
                 draw_board(board)
         if pygame.key.get_pressed()[pygame.K_f]:
             game_state.GPSLimit = not game_state.GPSLimit
-            draw_gps_slider(((maths.log(game_state.GPS, game_state.MaxGPS) + 1) / -3) * (
-            Widgets.EndOfSlider - Widgets.StartOfSlider) +
-                            Widgets.EndOfSlider, game_state.GPSLimit)
+            #draw_gps_slider(((maths.log(game_state.GPS, game_state.TopGPS) + 1) / -3) * (
+            #Widgets.EndOfSlider - Widgets.StartOfSlider) +
+            #                Widgets.EndOfSlider, game_state.GPSLimit)
+            bottom_gps_log=maths.log(game_state.BottomGPS,game_state.TopGPS)
+            draw_gps_slider(Widgets.EndOfSlider-((maths.log(game_state.GPS,game_state.TopGPS)-bottom_gps_log)*
+                                                 (Widgets.EndOfSlider-Widgets.StartOfSlider))/
+                            (1-bottom_gps_log),game_state.GPSLimit)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             game_state.OneTurn = True
         else:
@@ -91,10 +95,9 @@ def check_user_input(board, game_state):
                     y = Widgets.EndOfSlider
                     game_state.GPSLimit = True
                 draw_gps_slider(y, game_state.GPSLimit)
-                min_gps_log = maths.log(game_state.MinGPS, game_state.MaxGPS)
-                game_state.GPS = game_state.MaxGPS ** (((1 - min_gps_log) * (Widgets.EndOfSlider - y) /
-                                                        (Widgets.EndOfSlider - Widgets.StartOfSlider)) + min_gps_log)
-                print(game_state.GPS)
+                bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
+                game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (Widgets.EndOfSlider - y) /
+                                                        (Widgets.EndOfSlider - Widgets.StartOfSlider)) + bottom_gps_log)
             elif 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
                 board.Cell[a][b].birth(config.Square)
                 board = update_board(board)
@@ -176,6 +179,12 @@ def draw_gps_slider(y, gps_limit):
 
 
 pygame.init()
+pygame.event.set_allowed(None)
+pygame.event.set_allowed(pygame.MOUSEMOTION)
+pygame.event.set_allowed(pygame.MOUSEBUTTONDOWN)
+pygame.event.set_allowed(pygame.KEYDOWN)
+pygame.event.set_allowed(pygame.KEYUP)
+pygame.event.set_allowed(pygame.QUIT)
 Board = config.Board()
 GameState = config.GameState()
 Widgets = config.Widgets()
