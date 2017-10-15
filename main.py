@@ -42,10 +42,10 @@ class Board:
         self.Cushion = config.Cushion
         self.Cell = [[Cell(a, b) for b in range(self.Height + (2 * self.Cushion))]
                      for a in range(self.Width + 2 * self.Cushion)]
+        pygame.display.set_caption("Game of Life - Generation 0")
 
     def draw(self):
         """draws the current board onto the screen then updates the display"""
-        pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
         for a in range(self.Cushion, self.Cushion + self.Width):
             for b in range(self.Cushion, self.Cushion + self.Height):
                 self.Cell[a][b].draw((0, 0, 0))
@@ -58,7 +58,8 @@ class Board:
                 self.Cell[a][b].CurrentState = self.Cell[a][b].NextState
 
     def take_turn(self):
-        """Changes the NextState variables"""
+        """Changes the CurrentState variables & updates display caption"""
+        pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
         if self.Wrap:
             cushion = 0
         else:
