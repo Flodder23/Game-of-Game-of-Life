@@ -72,9 +72,17 @@ class Board:
                     self.Cell[a][b].birth(fate)
 
     def place_preset(self, preset_no, a, b):
-        shape, a, b = preset.get(preset_no, a, b)
+        if self.Wrap:
+            shape = preset.get(preset_no, a, b)[0]
+        else:
+            shape, a, b = preset.get(preset_no, a, b)
         for c in range(len(shape)):
             for d in range(len(shape[c])):
+                if self.Wrap:
+                    if a + c >= self.Width:
+                        a -= self.Width
+                    if b + d >= self.Height:
+                        b -= self.Height
                 if shape[c][d] == 0:
                     self.Cell[a + c][b + d].kill()
                 else:
