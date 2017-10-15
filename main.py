@@ -32,25 +32,23 @@ class Cell:
 
 
 class Board:
-    def __init__(self):  # customisable, default_value, description
+    def __init__(self):
         self.Width = config.Width
         self.Height = config.Height
         self.Size = config.Size
-        self.Wrap = False  # Whether the board wraps around on itself
+        self.Wrap = config.Wrap
         self.Edge = config.Edge
         self.Generations = 0
-        if self.Wrap:
-            self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
-        else:
-            self.Cushion = 10
+        self.Cushion = config.Cushion
         self.Cell = [[Cell(a, b) for b in range(self.Height + (2 * self.Cushion))]
                      for a in range(self.Width + 2 * self.Cushion)]
 
     def draw(self):
+        """draws the current board onto the screen then updates the display"""
         pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
         for a in range(self.Cushion, self.Cushion + self.Width):
             for b in range(self.Cushion, self.Cushion + self.Height):
-                self.Cell[a][b].draw((255, 255, 255))
+                self.Cell[a][b].draw((0, 0, 0))
         pygame.display.update()
 
     def update(self):
@@ -60,7 +58,7 @@ class Board:
                 self.Cell[a][b].CurrentState = self.Cell[a][b].NextState
 
     def take_turn(self):
-        """Returns the given board as it will be after one turn; changes the NextState variables"""
+        """Changes the NextState variables"""
         if self.Wrap:
             cushion = 0
         else:
@@ -74,7 +72,15 @@ class Board:
                     self.Cell[a][b].birth(fate)
 
     def place_preset(self, preset_no, a, b):
-        self = preset.place(self, preset_no, a, b)
+        shape, a, b = preset.get(preset_no, a, b)
+        for c in range(len(shape)):
+            for d in range(len(shape[c])):
+                if shape[c][d] == 0:
+                    self.Cell[a + c][b + d].kill()
+                else:
+                    self.Cell[a + c][b + d].birth(shape[c][d])
+        self.update()
+        self.draw()
 
     def reset(self):
         self.__init__()
@@ -116,6 +122,7 @@ def check(a, b):
 
 def check_user_input(game_state):
     """Checks for user input and acts accordingly"""
+    global Board
     for event in pygame.event.get():
         x, y = pygame.mouse.get_pos()
         a = x // Board.Size + Board.Cushion
@@ -129,8 +136,6 @@ def check_user_input(game_state):
         for key in range(pygame.K_1, pygame.K_8):
             if pygame.key.get_pressed()[key]:
                 Board.place_preset(int(pygame.key.name(key)), a, b)
-                Board.update()
-                Board.draw()
         if pygame.key.get_pressed()[pygame.K_f]:
             game_state.GPSLimit = not game_state.GPSLimit
             bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
@@ -224,6 +229,7 @@ for _ in range(int(Board.Width * Board.Height / 5)):
     ry = random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)
     Board.Cell[rx][ry].CurrentState = 0
     Board.Cell[rx][ry].birth(config.Square)  # random.randint(0, config.NoOfButtons - 1))
+Board.update()
 Board.draw()
 
 while True:
