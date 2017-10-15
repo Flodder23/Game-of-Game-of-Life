@@ -47,23 +47,3 @@ class Widgets:
         self.SpaceBetweenNotches = (self.EndOfSlider-self.StartOfSlider) / (self.NoOfNotches-1)
         self.ButtonStart = Size * Width
         self.SliderY = Size * Width + Edge / 2 + self.ButtonSize / 2
-
-
-def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top")):
-    """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
-    \"centre\" or \"right\" and the second value can be \"top\", \"centre\" or \"bottom\".
-    note that these values relate to x and y respectively whatever the rotation, which is in degrees."""
-    font_obj = pygame.font.Font("freesansbold.ttf", size)
-    msg_surface_obj = pygame.transform.rotate(font_obj.render(text, False, colour), rotate)
-    msg_rect_obj = msg_surface_obj.get_rect()
-    a, b = msg_surface_obj.get_size()
-    if alignment[0] == "centre":
-        x -= a / 2
-    elif alignment[0] == "right":
-        x -= a
-    if alignment[1] == "centre":
-        y -= b / 2
-    elif alignment[1] == "bottom":
-        y -= b
-    msg_rect_obj.topleft = (x, y)
-    screen.blit(msg_surface_obj, msg_rect_obj)

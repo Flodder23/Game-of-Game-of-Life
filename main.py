@@ -130,7 +130,6 @@ def check(a, b):
 
 def check_user_input(game_state):
     """Checks for user input and acts accordingly"""
-    global Board
     for event in pygame.event.get():
         x, y = pygame.mouse.get_pos()
         a = x // Board.Size + Board.Cushion
@@ -197,10 +196,10 @@ def draw_gps_slider(y, gps_limit):
                                                             Widgets.StartOfSlider + n * Widgets.SpaceBetweenNotches),
                          (Widgets.SliderY + Widgets.NotchLength / 2,
                           Widgets.StartOfSlider + n * Widgets.SpaceBetweenNotches))
-    config.write(Screen, Widgets.SliderY - (12 + Widgets.NotchLength),
-                 (Widgets.StartOfSlider + Widgets.EndOfSlider) * 0.5,
-                 "Speed", GameState.Colour["Text"], 20,
-                 rotate=90, alignment=("left", "centre"))
+    write(Screen, Widgets.SliderY - (12 + Widgets.NotchLength),
+          (Widgets.StartOfSlider + Widgets.EndOfSlider) * 0.5,
+          "Speed", GameState.Colour["Text"], 20,
+          rotate=90, alignment=("left", "centre"))
     if gps_limit:
         colour = "Highlighter"
     else:
@@ -215,6 +214,26 @@ def draw_gps_slider(y, gps_limit):
                                                            (Widgets.SliderY + Widgets.NotchLength,
                                                             y + Widgets.NotchLength / 2)))
     pygame.display.update()
+
+
+def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top")):
+    """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
+    \"centre\" or \"right\" and the second value can be \"top\", \"centre\" or \"bottom\".
+    note that these values relate to x and y respectively whatever the rotation, which is in degrees."""
+    font_obj = pygame.font.Font("freesansbold.ttf", size)
+    msg_surface_obj = pygame.transform.rotate(font_obj.render(text, False, colour), rotate)
+    msg_rect_obj = msg_surface_obj.get_rect()
+    a, b = msg_surface_obj.get_size()
+    if alignment[0] == "centre":
+        x -= a / 2
+    elif alignment[0] == "right":
+        x -= a
+    if alignment[1] == "centre":
+        y -= b / 2
+    elif alignment[1] == "bottom":
+        y -= b
+    msg_rect_obj.topleft = (x, y)
+    screen.blit(msg_surface_obj, msg_rect_obj)
 
 
 pygame.init()
