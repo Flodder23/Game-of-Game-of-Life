@@ -20,7 +20,7 @@ class GameState:
         self.GPS = 10  # C 10 How many Generations Per Seconds
         self.TopGPS = 100  # The GPS at the top of the slider.
         self.BottomGPS = 0.5  # The GPS at the bottom of slider.
-        self.GPSLimit = True
+        self.GPSIsLimited = True
         self.Paused = True
         self.OneTurn = False
         self.Colour = {"Alive": (0, 0, 0),

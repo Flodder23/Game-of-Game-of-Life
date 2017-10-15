@@ -60,41 +60,24 @@ def get(shape_no, a, b):
         if b + 15 >= config.Height + config.Cushion:
             b = config.Height + config.Cushion - 15
         shape = [[0 for _ in range(15)] for _ in range(38)]
-        shape[23][0] = 1
-        shape[24][0] = 1
-        shape[34][0] = 1
-        shape[35][0] = 1
-        shape[22][1] = 1
-        shape[24][1] = 1
-        shape[34][1] = 1
-        shape[35][1] = 1
-        shape[0][2] = 1
-        shape[1][2] = 1
-        shape[9][2] = 1
-        shape[10][2] = 1
-        shape[22][2] = 1
-        shape[23][2] = 1
-        shape[0][3] = 1
-        shape[1][3] = 1
-        shape[8][3] = 1
-        shape[10][3] = 1
-        shape[8][4] = 1
-        shape[9][4] = 1
-        shape[16][4] = 1
-        shape[17][4] = 1
-        shape[16][5] = 1
-        shape[18][5] = 1
-        shape[16][6] = 1
-        shape[35][7] = 1
-        shape[36][7] = 1
-        shape[35][8] = 1
-        shape[37][8] = 1
-        shape[35][9] = 1
-        shape[24][12] = 1
-        shape[25][12] = 1
-        shape[26][12] = 1
-        shape[24][13] = 1
-        shape[25][14] = 1
+        to_be_birthed = [[23, 24, 34, 35],  #0
+                         [22,24,34,35],
+                         [0,1,9,10,22,23],
+                         [0,1,8,10],
+                         [8,9,16,17],
+                         [16,18],           #5
+                         [16],
+                         [35,36],
+                         [35,37],
+                         [35],
+                         [],                #10
+                         [],
+                         [24,25,26],
+                         [24],
+                         [25]]
+        for c in range(len(to_be_birthed)):
+            for d in to_be_birthed[c]:
+                shape[d][c]=1
 
     elif shape_no == 7:
         if a + 10 >= config.Width + config.Cushion:

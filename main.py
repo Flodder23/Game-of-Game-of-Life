@@ -145,11 +145,11 @@ def check_user_input(game_state):
             if pygame.key.get_pressed()[key]:
                 Board.place_preset(int(pygame.key.name(key)), a, b)
         if pygame.key.get_pressed()[pygame.K_f]:
-            game_state.GPSLimit = not game_state.GPSLimit
+            game_state.GPSIsLimited = not game_state.GPSIsLimited
             bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
             draw_gps_slider(Widgets.EndOfSlider - ((maths.log(game_state.GPS, game_state.TopGPS) - bottom_gps_log) *
                                                    (Widgets.EndOfSlider - Widgets.StartOfSlider)) /
-                            (1 - bottom_gps_log), game_state.GPSLimit)
+                            (1 - bottom_gps_log), game_state.GPSIsLimited)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             game_state.OneTurn = True
         else:
@@ -163,8 +163,8 @@ def check_user_input(game_state):
                     y = Widgets.StartOfSlider
                 elif y > Widgets.EndOfSlider:
                     y = Widgets.EndOfSlider
-                    game_state.GPSLimit = True
-                draw_gps_slider(y, game_state.GPSLimit)
+                    game_state.GPSIsLimited = True
+                draw_gps_slider(y, game_state.GPSIsLimited)
                 bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
                 game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (Widgets.EndOfSlider - y) /
                                                         (Widgets.EndOfSlider - Widgets.StartOfSlider)) + bottom_gps_log)
@@ -239,18 +239,16 @@ def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top"))
 
 pygame.init()
 pygame.event.set_allowed(None)
-pygame.event.set_allowed(pygame.MOUSEMOTION)
-pygame.event.set_allowed(pygame.MOUSEBUTTONDOWN)
-pygame.event.set_allowed(pygame.KEYDOWN)
-pygame.event.set_allowed(pygame.KEYUP)
-pygame.event.set_allowed(pygame.QUIT)
+allowed_events = [pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT]
+for event in allowed_events:
+    pygame.event.set_allowed(event)
 Board = Board()
 GameState = config.GameState()
 Widgets = config.Widgets()
 Screen = pygame.display.set_mode((Board.Size * Board.Width + Widgets.ButtonSize, Board.Size * Board.Height))
 Screen.fill(GameState.Colour["Background"])
 draw_gps_slider(((maths.log(GameState.GPS, 10) + 1) / -3) * (Widgets.EndOfSlider - Widgets.StartOfSlider) +
-                Widgets.EndOfSlider, GameState.GPSLimit)
+                Widgets.EndOfSlider, GameState.GPSIsLimited)
 LastFrame = time.time()  # The time when the last frame update happened.
 for _ in range(int(Board.Width * Board.Height / 5)):
     rx = random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)
@@ -264,7 +262,7 @@ while True:
     GameState = check_user_input(GameState)
     Board.update()
     if (not GameState.Paused or (GameState.Paused and GameState.OneTurn)) and \
-            ((not GameState.GPSLimit) or time.time() - LastFrame > 1 / GameState.GPS):
+            ((not GameState.GPSIsLimited) or time.time() - LastFrame > 1 / GameState.GPS):
         if GameState.OneTurn:
             GameState.OneTurn = False
         Board.take_turn()
