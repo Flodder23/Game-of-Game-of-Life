@@ -15,7 +15,8 @@ Controls are as follows:
   - - 2-Small Exploder
   - - 3-Exploder
   - - 4-Pentadecathlon
-  - - 5-Light Weight Space Ship
-  - - 6-Tumbler
-  - - 7-Gosper Glider Gun\n
+  - - 4-Light Weight Space Ship
+  - - 5-Tumbler
+  - - 6-Gosper Glider Gun
+  - - 7-Pentadecathlon
   - Press ESC to exit the window.
