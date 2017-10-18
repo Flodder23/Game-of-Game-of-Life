@@ -13,22 +13,81 @@ class Cell:
         """a,b are the coordinates of the cell the instance represents"""
         self.CurrentState = config.Square
         self.NextState = config.Dead
-        self.Coordinates = (a, b)
+        self.BoardPos = (a, b)
+        self.Coordinates = ((self.BoardPos[0] - config.Cushion) * config.Size + config.Edge / 2,
+                            (self.BoardPos[1] - config.Cushion) * config.Size + config.Edge / 2)
+        self.Colour = GameState.Colour["Dead"]
 
     def kill(self):
         self.NextState = config.Dead
+        self.Colour = GameState.Colour["Dead"]
 
-    def birth(self, state):
+    def birth(self, state, colour):
         self.NextState = state
+        self.Colour = colour
 
     def draw(self, colour):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
-        x = (self.Coordinates[0] - Board.Cushion) * Board.Size + Board.Edge / 2
-        y = (self.Coordinates[1] - Board.Cushion) * Board.Size + Board.Edge / 2
+        x, y = self.Coordinates
         s = Board.Size - Board.Edge
         pygame.draw.rect(Screen, (255, 255, 255), (x, y, s, s))
         if self.CurrentState == config.Square:
             pygame.draw.rect(Screen, colour, (x, y, s, s))
+        elif self.CurrentState == config.Hex:
+            t = maths.sqrt(2)
+            s /= (1 + t)
+            a = x  # a-h are points along the edge of the square
+            b = maths.floor(x + (s * t / 2))
+            c = maths.floor(x + s + (s * t / 2))
+            d = maths.floor(x + s * (1 + t))
+            e = y
+            f = maths.floor(y + (s * t / 2))
+            g = maths.floor(y + s + (s * t / 2))
+            h = maths.floor(y + s * (1 + t))
+
+            pygame.draw.polygon(Screen, colour, ((b, e), (c, e),
+                                                 (d, f), (d, g),
+                                                 (c, h), (b, h),
+                                                 (a, g), (a, f)))
+
+    def check_fate(self):
+        """Checks whether the cell will be dead or alive at the end of this turn,
+            and if so what type it will be"""
+        total = [0, 0, 0]
+        a, b = self.BoardPos
+        al = a - 1  # a left (neighbour)
+        ar = a + 1  # a right
+        bu = b - 1  # b up
+        bd = b + 1  # b down
+        if Board.Wrap and a == Board.Width - 1:
+            ar = 0
+        if Board.Wrap and b == Board.Height - 1:
+            bd = 0
+        if self.CurrentState == config.Dead or self.CurrentState == config.Square or self.CurrentState == config.Hex:
+            total[Board.Cell[al][b].CurrentState] += 1
+            total[Board.Cell[a][bu].CurrentState] += 1
+            total[Board.Cell[ar][b].CurrentState] += 1
+            total[Board.Cell[a][bd].CurrentState] += 1
+        if self.CurrentState == config.Dead or self.CurrentState == config.Square:
+            total[Board.Cell[al][bu].CurrentState] += 1
+            total[Board.Cell[ar][bu].CurrentState] += 1
+            total[Board.Cell[al][bd].CurrentState] += 1
+            total[Board.Cell[ar][bd].CurrentState] += 1
+        new = config.Dead
+        birth = False
+        if self.CurrentState == config.Dead:
+            if total[config.Dead] == 5:  # if 5 dead cells; ie. if 3 alive cells
+                birth = True
+        elif self.CurrentState == config.Square:
+            if total[config.Dead] == 5 or total[config.Dead] == 6:
+                birth = True
+        elif self.CurrentState == config.Hex:
+            if total[config.Dead] == 2 or total[config.Dead] == 3:
+                birth = True
+        if birth:
+            del total[0]
+            new = total.index(max(total)) + 1
+        return new
 
 
 class Board:
@@ -66,11 +125,11 @@ class Board:
             cushion = 1
         for a in range(cushion, self.Width + (2 * self.Cushion) - cushion):  # Goes through all cells and kills
             for b in range(cushion, self.Height + (2 * self.Cushion) - cushion):  # those that will die and births
-                fate = check(a, b)  # those that will be born.
+                fate = Board.Cell[a][b].check_fate()  # those that will be born.
                 if fate == config.Dead:
                     self.Cell[a][b].kill()
                 else:
-                    self.Cell[a][b].birth(fate)
+                    self.Cell[a][b].birth(fate, GameState.Colour["Alive"])
 
     def place_preset(self, preset_no, a, b):
         if self.Wrap:
@@ -87,7 +146,7 @@ class Board:
                 if shape[c][d] == 0:
                     self.Cell[a + c][b + d].kill()
                 else:
-                    self.Cell[a + c][b + d].birth(shape[c][d])
+                    self.Cell[a + c][b + d].birth(shape[c][d], GameState.Colour["Alive"])
         self.update()
         self.draw()
 
@@ -95,38 +154,6 @@ class Board:
         self.__init__()
         self.update()
         self.draw()
-
-
-def check(a, b):
-    """Checks whether the cell will be dead or alive at the end of this turn,
-    and if so what type it will be"""
-    state = Board.Cell[a][b].CurrentState
-    total = [0, 0]
-    al = a - 1  # a left (neighbour)
-    ar = a + 1  # a right
-    bu = b - 1  # b up
-    bd = b + 1  # b down
-    if Board.Wrap and a == Board.Width - 1:
-        ar = 0
-    if Board.Wrap and b == Board.Height - 1:
-        bd = 0
-
-    total[Board.Cell[al][b].CurrentState] += 1
-    total[Board.Cell[a][bu].CurrentState] += 1
-    total[Board.Cell[ar][b].CurrentState] += 1
-    total[Board.Cell[a][bd].CurrentState] += 1
-    total[Board.Cell[al][bu].CurrentState] += 1
-    total[Board.Cell[ar][bu].CurrentState] += 1
-    total[Board.Cell[al][bd].CurrentState] += 1
-    total[Board.Cell[ar][bd].CurrentState] += 1
-    new = config.Dead
-    if state == config.Dead:
-        if total[config.Dead] == 5:  # if 5 dead cells; ie. if 3 alive cells
-            new = config.Square
-    if state == config.Square:
-        if total[config.Dead] == 5 or total[config.Dead] == 6:
-            new = config.Square
-    return new
 
 
 def check_user_input(game_state):
@@ -169,7 +196,7 @@ def check_user_input(game_state):
                 game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (Widgets.EndOfSlider - y) /
                                                         (Widgets.EndOfSlider - Widgets.StartOfSlider)) + bottom_gps_log)
             elif 0 <= a < Board.Width + Board.Cushion and 0 <= b < Board.Height + Board.Cushion:
-                Board.Cell[a][b].birth(config.Square)
+                Board.Cell[a][b].birth(config.Square, GameState.Colour["Alive"])
                 Board.update()
                 Board.draw()
         if pygame.mouse.get_pressed()[2]:
@@ -242,19 +269,19 @@ pygame.event.set_allowed(None)
 allowed_events = [pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT]
 for event in allowed_events:
     pygame.event.set_allowed(event)
-Board = Board()
 GameState = config.GameState()
 Widgets = config.Widgets()
+Board = Board()
 Screen = pygame.display.set_mode((Board.Size * Board.Width + Widgets.ButtonSize, Board.Size * Board.Height))
 Screen.fill(GameState.Colour["Background"])
 draw_gps_slider(((maths.log(GameState.GPS, 10) + 1) / -3) * (Widgets.EndOfSlider - Widgets.StartOfSlider) +
                 Widgets.EndOfSlider, GameState.GPSIsLimited)
-LastFrame = time.time()  # The time when the last frame update happened.
+LastFrame = time.time()  # The time when the last frame update happened
+Board.update()
 for _ in range(int(Board.Width * Board.Height / 5)):
-    rx = random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)
-    ry = random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)
-    Board.Cell[rx][ry].CurrentState = 0
-    Board.Cell[rx][ry].birth(config.Square)  # random.randint(0, config.NoOfButtons - 1))
+    Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
+        random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2),
+                                                                               (GameState.Colour["Alive"]))
 Board.update()
 Board.draw()
 
