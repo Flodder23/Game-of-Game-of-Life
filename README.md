@@ -11,12 +11,12 @@ Controls are as follows:
   - Press RIGHT Arrow to move forward a turn when paused.
   - Press ENTER to clear the board.
   - Presets (Press the corresponding number to place one):
-  - - 1-Glider
-  - - 2-Small Exploder
-  - - 3-Exploder
-  - - 4-Pentadecathlon
-  - - 4-Light Weight Space Ship
-  - - 5-Tumbler
-  - - 6-Gosper Glider Gun
-  - - 7-Pentadecathlon
+    - 1-Glider
+    - 2-Small Exploder
+    - 3-Exploder
+    - 4-Pentadecathlon
+    - 4-Light Weight Space Ship
+    - 5-Tumbler
+    - 6-Gosper Glider Gun
+    - 7-Pentadecathlon
   - Press ESC to exit the window.
