@@ -4,6 +4,7 @@ import pygame
 
 Dead = 0
 Square = 1
+Hex = 2
 Width = 50  # C 50 How many squares wide the board is
 Height = 30  # C 30 Ditto but with height
 Size = 20  # C 20 The size of the sides of each square (in pixels)
