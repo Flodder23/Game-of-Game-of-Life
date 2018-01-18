@@ -9,14 +9,15 @@ import random
 
 
 class Cell:
-    def __init__(self, a, b):
-        """a,b are the coordinates of the cell the instance represents"""
-        self.CurrentState = config.Square
-        self.NextState = config.Dead
+    def __init__(self, a, b, current, next, colour):
+        """a,b are the coordinates of the cell the instance represents."""
+        self.CurrentState = current
+        self.NextState = next
         self.BoardPos = (a, b)
         self.Coordinates = ((self.BoardPos[0] - config.Cushion) * config.Size + config.Edge / 2,
                             (self.BoardPos[1] - config.Cushion) * config.Size + config.Edge / 2)
-        self.Colour = GameState.Colour["Dead"]
+        self.Colour = colour
+        self.type = self.get_type()
 
     def kill(self):
         self.NextState = config.Dead
@@ -25,30 +26,6 @@ class Cell:
     def birth(self, state, colour):
         self.NextState = state
         self.Colour = colour
-
-    def draw(self, colour):
-        """Draws a type of cell (Type) at the desired cell (a,b)"""
-        x, y = self.Coordinates
-        s = Board.Size - Board.Edge
-        pygame.draw.rect(Screen, (255, 255, 255), (x, y, s, s))
-        if self.CurrentState == config.Square:
-            pygame.draw.rect(Screen, colour, (x, y, s, s))
-        elif self.CurrentState == config.Hex:
-            t = maths.sqrt(2)
-            s /= (1 + t)
-            a = x  # a-h are points along the edge of the square
-            b = maths.floor(x + (s * t / 2))
-            c = maths.floor(x + s + (s * t / 2))
-            d = maths.floor(x + s * (1 + t))
-            e = y
-            f = maths.floor(y + (s * t / 2))
-            g = maths.floor(y + s + (s * t / 2))
-            h = maths.floor(y + s * (1 + t))
-
-            pygame.draw.polygon(Screen, colour, ((b, e), (c, e),
-                                                 (d, f), (d, g),
-                                                 (c, h), (b, h),
-                                                 (a, g), (a, f)))
 
     def check_fate(self):
         """Checks whether the cell will be dead or alive at the end of this turn,
@@ -89,6 +66,45 @@ class Cell:
             new = total.index(max(total)) + 1
         return new
 
+    def get_type(self):
+        pass
+
+class Square(Cell):
+    def draw(self, colour = None):
+        """Draws a type of cell (Type) at the desired cell (a,b)"""
+        if colour == None: colour = self.Colour
+        x, y = self.Coordinates
+        s = Board.Size - Board.Edge
+        pygame.draw.rect(Screen, GameState.Colour["Dead"], (x, y, s, s))
+        if self.CurrentState == config.Square:
+            pygame.draw.rect(Screen, colour, (x, y, s, s))
+
+    def get_type(self):
+        return config.Square
+
+class Hex(Cell):
+    def draw(self, colour = None):
+        """Draws a type of cell (Type) at the desired cell (a,b)"""
+        if colour == None: colour = self.Colour
+        x, y = self.Coordinates
+        s = Board.Size - Board.Edge
+        pygame.draw.rect(Screen, GameState.Colour["Dead"], (x, y, s, s))
+        if self.CurrentState == config.Hex:
+            t = maths.sqrt(2)
+            s /= (1 + t)
+            a = x  # a-h are points along the edge of the square
+            b = maths.floor(x + (s * t / 2))
+            c = maths.floor(x + s + (s * t / 2))
+            d = maths.floor(x + s * (1 + t))
+            e = y
+            f = maths.floor(y + (s * t / 2))
+            g = maths.floor(y + s + (s * t / 2))
+            h = maths.floor(y + s * (1 + t))
+
+            pygame.draw.polygon(Screen, colour, ((b, e), (c, e),
+                                                 (d, f), (d, g),
+                                                 (c, h), (b, h),
+                                                 (a, g), (a, f)))
 
 class Board:
     def __init__(self):
@@ -99,8 +115,8 @@ class Board:
         self.Edge = config.Edge
         self.Generations = 0
         self.Cushion = config.Cushion
-        self.Cell = [[Cell(a, b) for b in range(self.Height + (2 * self.Cushion))]
-                     for a in range(self.Width + 2 * self.Cushion)]
+        self.Cell = [[Square(a, b, config.Square, config.Dead, GameState.Colour["Dead"]) for b in range(
+            self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
 
     def draw(self):
@@ -158,17 +174,17 @@ class Board:
 
 def check_user_input(game_state):
     """Checks for user input and acts accordingly"""
+    x, y = pygame.mouse.get_pos()
+    a = x // Board.Size + Board.Cushion
+    b = y // Board.Size + Board.Cushion
     for event in pygame.event.get():
-        x, y = pygame.mouse.get_pos()
-        a = x // Board.Size + Board.Cushion
-        b = y // Board.Size + Board.Cushion
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             game_state.Paused = not game_state.Paused
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
             pygame.quit()
             import sys
             sys.exit(0)
-        for key in range(pygame.K_1, pygame.K_8):
+        for key in range(pygame.K_1, pygame.K_9):
             if pygame.key.get_pressed()[key]:
                 Board.place_preset(int(pygame.key.name(key)), a, b)
         if pygame.key.get_pressed()[pygame.K_f]:
@@ -274,14 +290,15 @@ Widgets = config.Widgets()
 Board = Board()
 Screen = pygame.display.set_mode((Board.Size * Board.Width + Widgets.ButtonSize, Board.Size * Board.Height))
 Screen.fill(GameState.Colour["Background"])
-draw_gps_slider(((maths.log(GameState.GPS, 10) + 1) / -3) * (Widgets.EndOfSlider - Widgets.StartOfSlider) +
-                Widgets.EndOfSlider, GameState.GPSIsLimited)
+draw_gps_slider(
+    ((maths.log(GameState.GPS, 10) + 1) / -3) * (Widgets.EndOfSlider - Widgets.StartOfSlider) + Widgets.EndOfSlider,
+    GameState.GPSIsLimited)
 LastFrame = time.time()  # The time when the last frame update happened
 Board.update()
-for _ in range(int(Board.Width * Board.Height / 5)):
+for _ in range(int(Board.Width * Board.Height / 10)):
     Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
         random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2),
-                                                                               (GameState.Colour["Alive"]))
+                                                                               GameState.Colour["Alive"])
 Board.update()
 Board.draw()
 
