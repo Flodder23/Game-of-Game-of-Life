@@ -180,50 +180,61 @@ class Board:
 def check_user_input(game_state):
     """Checks for user input and acts accordingly"""
 
-    events = pygame.event.get()
+    pygame.event.get()
     x, y = pygame.mouse.get_pos()
     a = x // Board.Size + Board.Cushion
     b = y // Board.Size + Board.Cushion
-    for event in events:
+    if game_state.CanBePaused:
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             game_state.Paused = not game_state.Paused
-        check_quit(event)
-        for key in range(pygame.K_1, pygame.K_9):
-            if pygame.key.get_pressed()[key]:
-                Board.place_preset(int(pygame.key.name(key)), a, b)
+            game_state.CanBePaused = False
+    else:
+        if not pygame.key.get_pressed()[pygame.K_SPACE]:
+            game_state.CanBePaused = True
+    check_quit()
+    for key in range(pygame.K_1, pygame.K_9):
+        if pygame.key.get_pressed()[key]:
+            Board.place_preset(int(pygame.key.name(key)), a, b)
+    if game_state.CanChangeGPSLimit:
         if pygame.key.get_pressed()[pygame.K_f]:
             game_state.GPSIsLimited = not game_state.GPSIsLimited
             bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
             draw_gps_slider(SimWidgets.EndOfSlider - ((maths.log(game_state.GPS, game_state.TopGPS) - bottom_gps_log) *
                                                       (SimWidgets.EndOfSlider - SimWidgets.StartOfSlider)) /
                             (1 - bottom_gps_log), game_state.GPSIsLimited)
-        if pygame.key.get_pressed()[pygame.K_RIGHT]:
-            game_state.OneTurn = True
-        else:
-            game_state.OneTurn = False
-        if pygame.key.get_pressed()[pygame.K_RETURN]:
-            Board.reset()
-        if pygame.mouse.get_pressed()[0]:
-            if Board.Size * Board.Width + Board.Edge / 2 < x < Board.Size * Board.Width + SimWidgets.ButtonSize + \
-                            Board.Edge / 2:  # within the button+GPS slider area
-                if y < SimWidgets.StartOfSlider:
-                    y = SimWidgets.StartOfSlider
-                elif y > SimWidgets.EndOfSlider:
-                    y = SimWidgets.EndOfSlider
-                    game_state.GPSIsLimited = True
-                draw_gps_slider(y, game_state.GPSIsLimited)
-                bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
-                game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (SimWidgets.EndOfSlider - y) /
-                                                        (
+            game_state.CanChangeGPSLimit = False
+    else:
+        if not pygame.key.get_pressed()[pygame.K_f]:
+            game_state.CanChangeGPSLimit = True
+    if pygame.key.get_pressed()[pygame.K_RIGHT]:
+        game_state.OneTurn = True
+    else:
+        game_state.OneTurn = False
+    if pygame.key.get_pressed()[pygame.K_RETURN]:
+        Board.reset()
+    if pygame.mouse.get_pressed()[0]:
+        if Board.Size * Board.Width + Board.Edge / 2 < x < Board.Size * Board.Width + SimWidgets.ButtonSize + \
+                        Board.Edge / 2:  # within the button+GPS slider area
+            if y < SimWidgets.StartOfSlider:
+                y = SimWidgets.StartOfSlider
+            elif y > SimWidgets.EndOfSlider:
+                y = SimWidgets.EndOfSlider
+                game_state.GPSIsLimited = True
+            draw_gps_slider(y, game_state.GPSIsLimited)
+            bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
+            game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (SimWidgets.EndOfSlider - y) /
+                                                    (
                                                         SimWidgets.EndOfSlider - SimWidgets.StartOfSlider)) + bottom_gps_log)
-            elif 0 <= a < Board.Width + Board.Cushion and 0 <= b < Board.Height + Board.Cushion:
-                Board.Cell[a][b].birth(config.Square, GameState.Colour["Alive"])
-                Board.update()
-                Board.draw()
-        if pygame.mouse.get_pressed()[2]:
-            Board.Cell[a][b].kill()
+        elif 0 <= a < Board.Width + Board.Cushion and 0 <= b < Board.Height + Board.Cushion:
+            Board.Cell[a][b].birth(config.Square, GameState.Colour["Alive"])
             Board.update()
             Board.draw()
+    if pygame.mouse.get_pressed()[2]:
+        Board.Cell[a][b].kill()
+        Board.update()
+        Board.draw()
+
+
     return game_state
 
 
@@ -289,33 +300,34 @@ def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top"))
 def get_menu_choice(menu_widgets, game_state, screen):
     size = menu_widgets.ButtonSize
     border = menu_widgets.ButtonBorder
-    colour = menu_widgets.ButtonColour
+    border_col = menu_widgets.BorderColour
+    text_col = menu_widgets.TextColour
+    hover_col = menu_widgets.HoverColour
 
     centre = [screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5]
     for a in range(2):
-        pygame.draw.rect(screen, colour, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
+        pygame.draw.rect(screen, border_col, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
         pygame.draw.rect(screen, game_state.Colour["Background"], (
             (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
         centre = [screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5]
 
-    write(screen, screen.get_width() / 2, size * 2, "Main Menu", colour, size, alignment=("centre", "centre"))
+    write(screen, screen.get_width() / 2, size * 2, "Main Menu", text_col, size, alignment=("centre", "centre"))
 
     while True:
-        events = pygame.event.get()
-        for event in events:
-            check_quit(event)
+        pygame.event.get()
+        check_quit()
         x, y = pygame.mouse.get_pos()
-        top_colour = colour
-        bottom_colour = colour
+        top_colour = text_col
+        bottom_colour = text_col
         if screen.get_width() / 2 - 5 * size < x < screen.get_width() / 2 + 5 * size:
             if (screen.get_height() / 2) - size * 1.5 - size < y < (screen.get_height() / 2) - size * 1.5 + size:
                 if pygame.mouse.get_pressed()[0]:
                     return "Sim"
-                top_colour = game_state.Colour["Highlighter"]
+                top_colour = hover_col
             elif (screen.get_height() / 2) + size * 0.5 < y < (screen.get_height() / 2) + size * 2.5:
                 if pygame.mouse.get_pressed()[0]:
                     return "Game"
-                bottom_colour = game_state.Colour["Highlighter"]
+                bottom_colour = hover_col
 
         write(screen, screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5, "Simulator", top_colour,
               int(size / 1.5), alignment=("centre", "centre"))
@@ -325,11 +337,12 @@ def get_menu_choice(menu_widgets, game_state, screen):
         pygame.display.update()
 
 
-def check_quit(event):
-    if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
-        pygame.quit()
-        import sys
-        sys.exit(0)
+def check_quit():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            pygame.quit()
+            import sys
+            sys.exit(0)
 
 
 pygame.init()
@@ -373,4 +386,6 @@ if get_menu_choice(MenuWidgets, GameState, Screen) == "Sim":
             LastFrame = time.time()
 
 else:
-    print("Sorry, function not avaliable yet")
+    Player1 = False
+    while True:
+        Player1 = not Player1
