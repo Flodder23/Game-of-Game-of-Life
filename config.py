@@ -36,7 +36,14 @@ class GameState:
                        "Unselected": (160, 160, 160)}
 
 
-class Widgets:
+class MenuWidgets:
+    def __init__(self):
+        self.ButtonSize = 50
+        self.ButtonBorder = 4
+        self.ButtonColour = (255, 255, 255)
+
+
+class SimWidgets:
     def __init__(self):
         self.NoOfButtons = 0
         self.ButtonSize = 50

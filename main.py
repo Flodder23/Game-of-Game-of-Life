@@ -187,18 +187,15 @@ def check_user_input(game_state):
     for event in events:
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             game_state.Paused = not game_state.Paused
-        if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            pygame.quit()
-            import sys
-            sys.exit(0)
+        check_quit(event)
         for key in range(pygame.K_1, pygame.K_9):
             if pygame.key.get_pressed()[key]:
                 Board.place_preset(int(pygame.key.name(key)), a, b)
         if pygame.key.get_pressed()[pygame.K_f]:
             game_state.GPSIsLimited = not game_state.GPSIsLimited
             bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
-            draw_gps_slider(Widgets.EndOfSlider - ((maths.log(game_state.GPS, game_state.TopGPS) - bottom_gps_log) *
-                                                   (Widgets.EndOfSlider - Widgets.StartOfSlider)) /
+            draw_gps_slider(SimWidgets.EndOfSlider - ((maths.log(game_state.GPS, game_state.TopGPS) - bottom_gps_log) *
+                                                      (SimWidgets.EndOfSlider - SimWidgets.StartOfSlider)) /
                             (1 - bottom_gps_log), game_state.GPSIsLimited)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             game_state.OneTurn = True
@@ -207,17 +204,18 @@ def check_user_input(game_state):
         if pygame.key.get_pressed()[pygame.K_RETURN]:
             Board.reset()
         if pygame.mouse.get_pressed()[0]:
-            if Board.Size * Board.Width + Board.Edge / 2 < x < Board.Size * Board.Width + Widgets.ButtonSize + \
+            if Board.Size * Board.Width + Board.Edge / 2 < x < Board.Size * Board.Width + SimWidgets.ButtonSize + \
                             Board.Edge / 2:  # within the button+GPS slider area
-                if y < Widgets.StartOfSlider:
-                    y = Widgets.StartOfSlider
-                elif y > Widgets.EndOfSlider:
-                    y = Widgets.EndOfSlider
+                if y < SimWidgets.StartOfSlider:
+                    y = SimWidgets.StartOfSlider
+                elif y > SimWidgets.EndOfSlider:
+                    y = SimWidgets.EndOfSlider
                     game_state.GPSIsLimited = True
                 draw_gps_slider(y, game_state.GPSIsLimited)
                 bottom_gps_log = maths.log(game_state.BottomGPS, game_state.TopGPS)
-                game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (Widgets.EndOfSlider - y) /
-                                                        (Widgets.EndOfSlider - Widgets.StartOfSlider)) + bottom_gps_log)
+                game_state.GPS = game_state.TopGPS ** (((1 - bottom_gps_log) * (SimWidgets.EndOfSlider - y) /
+                                                        (
+                                                        SimWidgets.EndOfSlider - SimWidgets.StartOfSlider)) + bottom_gps_log)
             elif 0 <= a < Board.Width + Board.Cushion and 0 <= b < Board.Height + Board.Cushion:
                 Board.Cell[a][b].birth(config.Square, GameState.Colour["Alive"])
                 Board.update()
@@ -232,38 +230,39 @@ def check_user_input(game_state):
 def draw_gps_slider(y, gps_limit):
     """Draws the slider with the y coordinate of the button click
        (How many GPS this corresponds to is not dealt with here.)"""
-    if y < Widgets.StartOfSlider:
-        y = Widgets.StartOfSlider
-    elif y > Widgets.EndOfSlider:
-        y = Widgets.EndOfSlider
+    if y < SimWidgets.StartOfSlider:
+        y = SimWidgets.StartOfSlider
+    elif y > SimWidgets.EndOfSlider:
+        y = SimWidgets.EndOfSlider
     pygame.draw.rect(Screen, GameState.Colour["Background"],
-                     ((Widgets.ButtonStart, Widgets.StartOfSlider - Widgets.NotchLength),
-                      (Widgets.ButtonStart + Board.Edge + Widgets.HighlightSize +
-                       Widgets.ButtonSize, Widgets.EndOfSlider)))
-    pygame.draw.line(Screen, GameState.Colour["Text"], (Widgets.SliderY, Widgets.StartOfSlider), (Widgets.SliderY,
-                                                                                                  Widgets.EndOfSlider))
-    for n in range(Widgets.NoOfNotches):
-        pygame.draw.line(Screen, GameState.Colour["Text"], (Widgets.SliderY - Widgets.NotchLength / 2,
-                                                            Widgets.StartOfSlider + n * Widgets.SpaceBetweenNotches),
-                         (Widgets.SliderY + Widgets.NotchLength / 2,
-                          Widgets.StartOfSlider + n * Widgets.SpaceBetweenNotches))
-    write(Screen, Widgets.SliderY - (12 + Widgets.NotchLength),
-          (Widgets.StartOfSlider + Widgets.EndOfSlider) * 0.5,
+                     ((SimWidgets.ButtonStart, SimWidgets.StartOfSlider - SimWidgets.NotchLength),
+                      (SimWidgets.ButtonStart + Board.Edge + SimWidgets.HighlightSize +
+                       SimWidgets.ButtonSize, SimWidgets.EndOfSlider)))
+    pygame.draw.line(Screen, GameState.Colour["Text"], (SimWidgets.SliderY, SimWidgets.StartOfSlider),
+                     (SimWidgets.SliderY,
+                      SimWidgets.EndOfSlider))
+    for n in range(SimWidgets.NoOfNotches):
+        pygame.draw.line(Screen, GameState.Colour["Text"], (SimWidgets.SliderY - SimWidgets.NotchLength / 2,
+                                                            SimWidgets.StartOfSlider + n * SimWidgets.SpaceBetweenNotches),
+                         (SimWidgets.SliderY + SimWidgets.NotchLength / 2,
+                          SimWidgets.StartOfSlider + n * SimWidgets.SpaceBetweenNotches))
+    write(Screen, SimWidgets.SliderY - (12 + SimWidgets.NotchLength),
+          (SimWidgets.StartOfSlider + SimWidgets.EndOfSlider) * 0.5,
           "Speed", GameState.Colour["Text"], 20,
           rotate=90, alignment=("left", "centre"))
     if gps_limit:
         colour = "Highlighter"
     else:
         colour = "Unselected"
-    pygame.draw.polygon(Screen, GameState.Colour[colour], ((Widgets.SliderY + Widgets.NotchLength / 2, y),
-                                                           (Widgets.SliderY + Widgets.NotchLength,
-                                                            y - Widgets.NotchLength / 2),
-                                                           (Widgets.SliderY + 2 * Widgets.NotchLength,
-                                                            y - Widgets.NotchLength / 2),
-                                                           (Widgets.SliderY + 2 * Widgets.NotchLength,
-                                                            y + Widgets.NotchLength / 2),
-                                                           (Widgets.SliderY + Widgets.NotchLength,
-                                                            y + Widgets.NotchLength / 2)))
+    pygame.draw.polygon(Screen, GameState.Colour[colour], ((SimWidgets.SliderY + SimWidgets.NotchLength / 2, y),
+                                                           (SimWidgets.SliderY + SimWidgets.NotchLength,
+                                                            y - SimWidgets.NotchLength / 2),
+                                                           (SimWidgets.SliderY + 2 * SimWidgets.NotchLength,
+                                                            y - SimWidgets.NotchLength / 2),
+                                                           (SimWidgets.SliderY + 2 * SimWidgets.NotchLength,
+                                                            y + SimWidgets.NotchLength / 2),
+                                                           (SimWidgets.SliderY + SimWidgets.NotchLength,
+                                                            y + SimWidgets.NotchLength / 2)))
     pygame.display.update()
 
 
@@ -287,24 +286,27 @@ def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top"))
     screen.blit(msg_surface_obj, msg_rect_obj)
 
 
-def get_menu_choice(game_state, screen):
-    size = 50
-    border = 4
+def get_menu_choice(menu_widgets, game_state, screen):
+    size = menu_widgets.ButtonSize
+    border = menu_widgets.ButtonBorder
+    colour = menu_widgets.ButtonColour
 
     centre = [screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5]
     for a in range(2):
-        pygame.draw.rect(screen, (255, 255, 255), (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
+        pygame.draw.rect(screen, colour, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
         pygame.draw.rect(screen, game_state.Colour["Background"], (
             (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
         centre = [screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5]
 
-    write(screen, screen.get_width() / 2, size * 2, "Main Menu", (255, 255, 255), size, alignment=("centre", "centre"))
+    write(screen, screen.get_width() / 2, size * 2, "Main Menu", colour, size, alignment=("centre", "centre"))
 
     while True:
-        pygame.event.get()
+        events = pygame.event.get()
+        for event in events:
+            check_quit(event)
         x, y = pygame.mouse.get_pos()
-        top_colour = (255, 255, 255)
-        bottom_colour = (255, 255, 255)
+        top_colour = colour
+        bottom_colour = colour
         if screen.get_width() / 2 - 5 * size < x < screen.get_width() / 2 + 5 * size:
             if (screen.get_height() / 2) - size * 1.5 - size < y < (screen.get_height() / 2) - size * 1.5 + size:
                 if pygame.mouse.get_pressed()[0]:
@@ -323,22 +325,30 @@ def get_menu_choice(game_state, screen):
         pygame.display.update()
 
 
+def check_quit(event):
+    if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
+        pygame.quit()
+        import sys
+        sys.exit(0)
+
+
 pygame.init()
 pygame.event.set_allowed(None)
 allowed_events = [pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT]
 for event in allowed_events:
     pygame.event.set_allowed(event)
 GameState = config.GameState()
-Widgets = config.Widgets()
+SimWidgets = config.SimWidgets()
+MenuWidgets = config.MenuWidgets()
 Board = Board()
-Screen = pygame.display.set_mode((Board.Size * Board.Width + Widgets.ButtonSize, Board.Size * Board.Height))
+Screen = pygame.display.set_mode((Board.Size * Board.Width + SimWidgets.ButtonSize, Board.Size * Board.Height))
 Screen.fill(GameState.Colour["Background"])
 
-if get_menu_choice(GameState, Screen) == "Sim":
+if get_menu_choice(MenuWidgets, GameState, Screen) == "Sim":
     Screen.fill(GameState.Colour["Background"])
     draw_gps_slider(
         ((maths.log(GameState.GPS, 10) + 1) / -3) * (
-            Widgets.EndOfSlider - Widgets.StartOfSlider) + Widgets.EndOfSlider,
+            SimWidgets.EndOfSlider - SimWidgets.StartOfSlider) + SimWidgets.EndOfSlider,
         GameState.GPSIsLimited)
     LastFrame = time.time()  # The time when the last frame update happened
     Board.update()
