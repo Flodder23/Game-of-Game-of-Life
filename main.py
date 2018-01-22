@@ -69,8 +69,9 @@ class Cell:
     def get_type(self):
         pass
 
+
 class Square(Cell):
-    def draw(self, colour = None):
+    def draw(self, colour=None):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
         if colour == None: colour = self.Colour
         x, y = self.Coordinates
@@ -82,8 +83,9 @@ class Square(Cell):
     def get_type(self):
         return config.Square
 
+
 class Hex(Cell):
-    def draw(self, colour = None):
+    def draw(self, colour=None):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
         if colour == None: colour = self.Colour
         x, y = self.Coordinates
@@ -105,6 +107,7 @@ class Hex(Cell):
                                                  (d, f), (d, g),
                                                  (c, h), (b, h),
                                                  (a, g), (a, f)))
+
 
 class Board:
     def __init__(self):
@@ -174,10 +177,12 @@ class Board:
 
 def check_user_input(game_state):
     """Checks for user input and acts accordingly"""
+
+    events = pygame.event.get()
     x, y = pygame.mouse.get_pos()
     a = x // Board.Size + Board.Cushion
     b = y // Board.Size + Board.Cushion
-    for event in pygame.event.get():
+    for event in events:
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             game_state.Paused = not game_state.Paused
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
@@ -280,6 +285,42 @@ def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top"))
     screen.blit(msg_surface_obj, msg_rect_obj)
 
 
+def get_menu_choice(game_state, screen):
+    size = 50
+    border = 4
+
+    centre = [screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5]
+    for a in range(2):
+        pygame.draw.rect(screen, (255, 255, 255), (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
+        pygame.draw.rect(screen, game_state.Colour["Background"], (
+            (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
+        centre = [screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5]
+
+    write(screen, screen.get_width() / 2, size * 2, "Main Menu", (255, 255, 255), size, alignment=("centre", "centre"))
+
+    while True:
+        pygame.event.get()
+        x, y = pygame.mouse.get_pos()
+        top_colour = (255, 255, 255)
+        bottom_colour = (255, 255, 255)
+        if screen.get_width() / 2 - 5 * size < x < screen.get_width() / 2 + 5 * size:
+            if (screen.get_height() / 2) - size * 1.5 - size < y < (screen.get_height() / 2) - size * 1.5 + size:
+                if pygame.mouse.get_pressed()[0]:
+                    return "Sim"
+                top_colour = game_state.Colour["Highlighter"]
+            elif (screen.get_height() / 2) + size * 0.5 < y < (screen.get_height() / 2) + size * 2.5:
+                if pygame.mouse.get_pressed()[0]:
+                    return "Game"
+                bottom_colour = game_state.Colour["Highlighter"]
+
+        write(screen, screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5, "Simulator", top_colour,
+              int(size / 1.5), alignment=("centre", "centre"))
+        write(screen, screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5, "2-Player Game", bottom_colour,
+              int(size / 1.5), alignment=("centre", "centre"))
+
+        pygame.display.update()
+
+
 pygame.init()
 pygame.event.set_allowed(None)
 allowed_events = [pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT]
@@ -290,27 +331,34 @@ Widgets = config.Widgets()
 Board = Board()
 Screen = pygame.display.set_mode((Board.Size * Board.Width + Widgets.ButtonSize, Board.Size * Board.Height))
 Screen.fill(GameState.Colour["Background"])
-draw_gps_slider(
-    ((maths.log(GameState.GPS, 10) + 1) / -3) * (Widgets.EndOfSlider - Widgets.StartOfSlider) + Widgets.EndOfSlider,
-    GameState.GPSIsLimited)
-LastFrame = time.time()  # The time when the last frame update happened
-Board.update()
-for _ in range(int(Board.Width * Board.Height / 10)):
-    Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
-        random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2),
-                                                                               GameState.Colour["Alive"])
-Board.update()
-Board.draw()
 
-while True:
-    GameState = check_user_input(GameState)
+if get_menu_choice(GameState, Screen) == "Sim":
+    Screen.fill(GameState.Colour["Background"])
+    draw_gps_slider(
+        ((maths.log(GameState.GPS, 10) + 1) / -3) * (
+            Widgets.EndOfSlider - Widgets.StartOfSlider) + Widgets.EndOfSlider,
+        GameState.GPSIsLimited)
+    LastFrame = time.time()  # The time when the last frame update happened
     Board.update()
-    if (not GameState.Paused or (GameState.Paused and GameState.OneTurn)) and \
-            ((not GameState.GPSIsLimited) or time.time() - LastFrame > 1 / GameState.GPS):
-        if GameState.OneTurn:
-            GameState.OneTurn = False
-        Board.take_turn()
+    for _ in range(int(Board.Width * Board.Height / 10)):
+        Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
+            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2),
+                                                                                   GameState.Colour["Alive"])
+    Board.update()
+    Board.draw()
+    
+    while True:
+        GameState = check_user_input(GameState)
         Board.update()
-        Board.Generations += 1
-        Board.draw()
-        LastFrame = time.time()
+        if (not GameState.Paused or (GameState.Paused and GameState.OneTurn)) and \
+                ((not GameState.GPSIsLimited) or time.time() - LastFrame > 1 / GameState.GPS):
+            if GameState.OneTurn:
+                GameState.OneTurn = False
+            Board.take_turn()
+            Board.update()
+            Board.Generations += 1
+            Board.draw()
+            LastFrame = time.time()
+
+else:
+    print("Sorry, function not avaliable yet")
