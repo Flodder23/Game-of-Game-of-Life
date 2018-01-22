@@ -9,10 +9,10 @@ import random
 
 
 class Cell:
-    def __init__(self, a, b, current, next, colour):
+    def __init__(self, a, b, current_state, next_state, colour):
         """a,b are the coordinates of the cell the instance represents."""
-        self.CurrentState = current
-        self.NextState = next
+        self.CurrentState = current_state
+        self.NextState = next_state
         self.BoardPos = (a, b)
         self.Coordinates = ((self.BoardPos[0] - config.Cushion) * config.Size + config.Edge / 2,
                             (self.BoardPos[1] - config.Cushion) * config.Size + config.Edge / 2)
@@ -73,7 +73,8 @@ class Cell:
 class Square(Cell):
     def draw(self, colour=None):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
-        if colour == None: colour = self.Colour
+        if colour is None:
+            colour = self.Colour
         x, y = self.Coordinates
         s = Board.Size - Board.Edge
         pygame.draw.rect(Screen, GameState.Colour["Dead"], (x, y, s, s))
@@ -87,7 +88,8 @@ class Square(Cell):
 class Hex(Cell):
     def draw(self, colour=None):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
-        if colour == None: colour = self.Colour
+        if colour is None:
+            colour = self.Colour
         x, y = self.Coordinates
         s = Board.Size - Board.Edge
         pygame.draw.rect(Screen, GameState.Colour["Dead"], (x, y, s, s))
@@ -346,7 +348,7 @@ if get_menu_choice(GameState, Screen) == "Sim":
                                                                                    GameState.Colour["Alive"])
     Board.update()
     Board.draw()
-    
+
     while True:
         GameState = check_user_input(GameState)
         Board.update()
