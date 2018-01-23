@@ -1,14 +1,6 @@
-import pygame
-
-# customisable, default_value, description
-
 Dead = 0
 Square = 1
 Hex = 2
-Width = 50  # C 50 How many squares wide the board is
-Height = 30  # C 30 Ditto but with height
-Size = 20  # C 20 The size of the sides of each square (in pixels)
-Edge = Size // 7  # C Size / 15 The gap between each cell
 Wrap = True  # Whether the board wraps around on itself
 if Wrap:
     Cushion = 0
@@ -38,16 +30,18 @@ class GameState:
                        "Unselected": (160, 160, 160)}
 
 
-class MenuWidgets:
+class Menu:
     def __init__(self):
         self.ButtonSize = 50
         self.ButtonBorder = 4
         self.BorderColour = (255, 255,255)
         self.TextColour = (255, 255,255)
         self.HoverColour = (0, 255, 100)
+        self.Width = 1000
+        self.Height = 600
 
 
-class SimWidgets:
+class Sim:
     def __init__(self):
         self.NoOfButtons = 0
         self.ButtonSize = 50
@@ -59,3 +53,15 @@ class SimWidgets:
         self.SpaceBetweenNotches = (self.EndOfSlider-self.StartOfSlider) / (self.NoOfNotches-1)
         self.ButtonStart = Size * Width
         self.SliderY = Size * Width + Edge / 2 + self.ButtonSize / 2
+        self.Width = 50  # C 50 How many squares wide the board is
+        self.Height = 30  # C 30 Ditto but with height
+        self.Size = 20  # C 20 The size of the sides of each square (in pixels)
+        self.Edge = Size // 7  # C Size / 15 The gap between each cell
+
+
+class Game:
+    def __init__(self):
+        self.Width = 50  # C 50 How many squares wide the board is
+        self.Height = 30  # C 30 Ditto but with height
+        self.Size = 20  # C 20 The size of the sides of each square (in pixels)
+        self.Edge = self.Size // 7  # C Size / 15 The gap between each cell
