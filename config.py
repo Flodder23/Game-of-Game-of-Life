@@ -53,6 +53,7 @@ class Sim:
         self.OneTurn = False
         self.CanBePaused = True
         self.CanChangeGPSLimit = True
+        self.CanGoForward = True
         self.Colour = {"Alive": (0, 0, 0),
                        "Dead": (255, 255, 255),
                        "Highlighter": (0, 255, 100),

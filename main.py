@@ -152,7 +152,7 @@ class Board:
                 else:
                     self.Cell[a][b].birth(fate, Sim.Colour["Alive"])
 
-    def place_preset(self, preset_no, a, b, state):
+    def place_preset(self, preset_no, a, b):
         if self.Wrap:
             shape = preset.get(preset_no, a, b, self)[0]
         else:
@@ -193,7 +193,7 @@ def check_user_input(sim):
             sim.CanBePaused = True
     for key in range(pygame.K_1, pygame.K_9):
         if pygame.key.get_pressed()[key]:
-            Board.place_preset(int(pygame.key.name(key)), a, b, sim)
+            Board.place_preset(int(pygame.key.name(key)), a, b)
     if sim.CanChangeGPSLimit:
         if pygame.key.get_pressed()[pygame.K_f]:
             sim.GPSIsLimited = not sim.GPSIsLimited
@@ -206,8 +206,12 @@ def check_user_input(sim):
         if not pygame.key.get_pressed()[pygame.K_f]:
             sim.CanChangeGPSLimit = True
     if pygame.key.get_pressed()[pygame.K_RIGHT]:
-        sim.OneTurn = True
+        if sim.CanGoForward:
+            sim.OneTurn = True
+            sim.CanGoForward = False
     else:
+        if not sim.CanGoForward:
+            sim.CanGoForward = True
         sim.OneTurn = False
     if pygame.key.get_pressed()[pygame.K_RETURN]:
         Board.reset(sim)
@@ -298,6 +302,7 @@ def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top"))
 
 def get_menu_choice(menu, screen):
     pygame.display.set_mode((menu.Width, menu.Height))
+    screen.fill(menu.Colour["Background"])
     size = menu.ButtonSize
     border = menu.ButtonBorder
     border_col = menu.Colour["Border"]
@@ -370,8 +375,7 @@ if get_menu_choice(config.Menu(), Screen) == "Sim":
     while True:
         Sim = check_user_input(Sim)
         Board.update()
-        if (not Sim.Paused or (Sim.Paused and Sim.OneTurn)) and \
-                ((not Sim.GPSIsLimited) or time.time() - LastFrame > 1 / Sim.GPS):
+        if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) or (Sim.Paused and Sim.OneTurn):
             if Sim.OneTurn:
                 Sim.OneTurn = False
             Board.take_turn()
