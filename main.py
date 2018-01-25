@@ -156,7 +156,7 @@ class Board:
         if self.Wrap:
             shape = preset.get(preset_no, a, b, self)[0]
         else:
-            shape, a, b = preset.get(preset_no, a, self)
+            shape, a, b = preset.get(preset_no, a, b, self)
         for c in range(len(shape)):
             for d in range(len(shape[c])):
                 if self.Wrap:
