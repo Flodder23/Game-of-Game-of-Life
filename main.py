@@ -9,84 +9,112 @@ import random
 
 
 class Cell:
-    def __init__(self, a, b, current_state, next_state, colour, board):
+    def __init__(self, a, b, current_state, next_state, board, player):
         """a,b are the coordinates of the cell the instance represents."""
         self.CurrentState = current_state
         self.NextState = next_state
         self.BoardPos = (a, b)
         self.Coordinates = ((self.BoardPos[0] - board.Cushion) * board.Size + board.Edge / 2,
                             (self.BoardPos[1] - board.Cushion) * board.Size + board.Edge / 2)
-        self.Colour = colour
-        self.type = self.get_type()
-
+        self.CurrentPlayer = 0
+        self.NextPlayer = player
+        if self.CurrentPlayer == 0:
+            self.Colour = board.Colour["Alive"]
+        else:
+            self.Colour = board.Colour["Player" + str(player)]
+    
     def kill(self):
         self.NextState = config.Dead
-        self.Colour = Sim.Colour["Dead"]
-
-    def birth(self, state, colour):
+        self.NextPlayer = 0
+    
+    def birth(self, state, player):
         self.NextState = state
-        self.Colour = colour
-
-    def check_fate(self):
+        self.NextPlayer = player
+    
+    def check_fate(self, board):
         """Checks whether the cell will be dead or alive at the end of this turn,
             and if so what type it will be"""
-        total = [0, 0, 0]
+        total = [0, 0, 0, 0]
+        player = [0, 0, 0, 0, 0]
         a, b = self.BoardPos
         al = a - 1  # a left (neighbour)
         ar = a + 1  # a right
         bu = b - 1  # b up
         bd = b + 1  # b down
-        if Board.Wrap and a == Board.Width - 1:
+        if board.Wrap and a == board.Width - 1:
             ar = 0
-        if Board.Wrap and b == Board.Height - 1:
+        if board.Wrap and b == board.Height - 1:
             bd = 0
         if self.CurrentState == config.Dead or self.CurrentState == config.Square or self.CurrentState == config.Hex:
-            total[Board.Cell[al][b].CurrentState] += 1
-            total[Board.Cell[a][bu].CurrentState] += 1
-            total[Board.Cell[ar][b].CurrentState] += 1
-            total[Board.Cell[a][bd].CurrentState] += 1
+            total[board.Cell[al][b].CurrentState] += 1
+            player[board.Cell[al][b].CurrentPlayer] += 1
+            
+            total[board.Cell[a][bu].CurrentState] += 1
+            player[board.Cell[a][bu].CurrentPlayer] += 1
+            
+            total[board.Cell[ar][b].CurrentState] += 1
+            player[board.Cell[ar][b].CurrentPlayer] += 1
+            
+            total[board.Cell[a][bd].CurrentState] += 1
+            player[board.Cell[a][bd].CurrentPlayer] += 1
+        
         if self.CurrentState == config.Dead or self.CurrentState == config.Square:
-            total[Board.Cell[al][bu].CurrentState] += 1
-            total[Board.Cell[ar][bu].CurrentState] += 1
-            total[Board.Cell[al][bd].CurrentState] += 1
-            total[Board.Cell[ar][bd].CurrentState] += 1
-        new = config.Dead
+            total[board.Cell[al][bu].CurrentState] += 1
+            player[board.Cell[al][bu].CurrentPlayer] += 1
+            
+            total[board.Cell[ar][bu].CurrentState] += 1
+            player[board.Cell[ar][bu].CurrentPlayer] += 1
+            
+            total[board.Cell[al][bd].CurrentState] += 1
+            player[board.Cell[al][bd].CurrentPlayer] += 1
+            
+            total[board.Cell[ar][bd].CurrentState] += 1
+            player[board.Cell[ar][bd].CurrentPlayer] += 1
+        
+        new_state = config.Dead
+        new_player = 0
         birth = False
         if self.CurrentState == config.Dead:
             if total[config.Dead] == 5:  # if 5 dead cells; ie. if 3 alive cells
                 birth = True
         elif self.CurrentState == config.Square:
-            if total[config.Dead] == 5 or total[config.Dead] == 6:
+            if total[config.Dead] in (5, 6):
                 birth = True
         elif self.CurrentState == config.Hex:
-            if total[config.Dead] == 2 or total[config.Dead] == 3:
+            if total[config.Dead] in (2, 3):
                 birth = True
         if birth:
             del total[0]
-            new = total.index(max(total)) + 1
-        return new
-
-    def get_type(self):
-        pass
+            new_state = total.index(max(total)) + 1
+            del player[0]
+            new_player = player.index(max(player)) + 1
+        
+        return new_state, new_player
+    
+    def draw(self, size, board):
+        x, y = self.Coordinates
+        x += board.Size // 2
+        y += board.Size // 2
+        pygame.draw.rect(Screen, board.Colour["Dead"], (x - size / 2, y - size / 2, size, size))
+        if not self.CurrentState == config.Dead:
+            if self.CurrentPlayer == 0:
+                self.draw_shape(size, x, y, board.Colour["Alive"])
+            else:
+                self.draw_shape(size, x, y, board.Colour["Player" + str(self.CurrentPlayer)])
+    
+    def update(self):
+        self.CurrentState = self.NextState
+        self.CurrentPlayer = self.NextPlayer
 
 
 class Square(Cell):
-    def draw(self, colour=None):
+    def draw_shape(self, size, x, y, colour):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
-        if colour is None:
-            colour = self.Colour
-        x, y = self.Coordinates
-        s = Board.Size - Board.Edge
-        pygame.draw.rect(Screen, Sim.Colour["Dead"], (x, y, s, s))
-        if self.CurrentState == config.Square:
-            pygame.draw.rect(Screen, colour, (x, y, s, s))
-
-    def get_type(self):
-        return config.Square
+        pygame.draw.rect(Screen, colour, (x - size / 2, y - size / 2, size, size))
 
 
 class Hex(Cell):
-    def draw(self, colour=None):
+    def draw_shape(self, colour=None):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
         if colour is None:
             colour = self.Colour
@@ -104,7 +132,7 @@ class Hex(Cell):
             f = maths.floor(y + (s * t / 2))
             g = maths.floor(y + s + (s * t / 2))
             h = maths.floor(y + s * (1 + t))
-
+            
             pygame.draw.polygon(Screen, colour, ((b, e), (c, e),
                                                  (d, f), (d, g),
                                                  (c, h), (b, h),
@@ -120,23 +148,29 @@ class Board:
         self.Edge = state.Edge
         self.Generations = 0
         self.Cushion = state.Cushion
-        self.Cell = [[Square(a, b, config.Square, config.Dead, Sim.Colour["Dead"], self) for b in range(
+        self.Colour = state.Colour
+        self.PreviewSize = state.PreviewSize
+        self.Cell = [[Square(a, b, config.Square, config.Dead, self, 0) for b in range(
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
-
-    def draw(self):
+    
+    def draw(self, preview=False):
         """draws the current board onto the screen then updates the display"""
+        if preview:
+            size = self.PreviewSize
+        else:
+            size = self.Size - self.Edge
         for a in range(self.Cushion, self.Cushion + self.Width):
             for b in range(self.Cushion, self.Cushion + self.Height):
-                self.Cell[a][b].draw((0, 0, 0))
+                self.Cell[a][b].draw(size, self)
         pygame.display.update()
-
+    
     def update(self):
         """Puts the NextState variables in the CurrentState variables"""
         for a in range(self.Width + 2 * self.Cushion):
             for b in range(self.Height + 2 * self.Cushion):
-                self.Cell[a][b].CurrentState = self.Cell[a][b].NextState
-
+                self.Cell[a][b].update()
+    
     def take_turn(self):
         """Changes the CurrentState variables & updates display caption"""
         pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
@@ -146,12 +180,15 @@ class Board:
             cushion = 1
         for a in range(cushion, self.Width + (2 * self.Cushion) - cushion):  # Goes through all cells and kills
             for b in range(cushion, self.Height + (2 * self.Cushion) - cushion):  # those that will die and births
-                fate = Board.Cell[a][b].check_fate()  # those that will be born.
+                fate, player = Board.Cell[a][b].check_fate(self)  # those that will be born.
                 if fate == config.Dead:
                     self.Cell[a][b].kill()
                 else:
-                    self.Cell[a][b].birth(fate, Sim.Colour["Alive"])
-
+                    if player == 0:
+                        self.Cell[a][b].birth(fate, 0)
+                    else:
+                        self.Cell[a][b].birth(fate, player)
+    
     def place_preset(self, preset_no, a, b):
         if self.Wrap:
             shape = preset.get(preset_no, a, b, self)[0]
@@ -167,23 +204,65 @@ class Board:
                 if shape[c][d] == 0:
                     self.Cell[a + c][b + d].kill()
                 else:
-                    self.Cell[a + c][b + d].birth(shape[c][d], Sim.Colour["Alive"])
+                    self.Cell[a + c][b + d].birth(shape[c][d], 0)
         self.update()
         self.draw()
-
+    
     def reset(self, state):
         self.__init__(state)
         self.update()
         self.draw()
+    
+    def show_future(self, a, b, kill, player):
+        temp_board = self
+        if kill:
+            temp_board.Cell[a][b].kill()
+        else:
+            temp_board.Cell[a][b].birth(config.Square, player)
+        temp_board.draw()
+        temp_board.take_turn()
+        temp_board.update()
+        temp_board.draw(preview=True)
 
 
-def check_user_input(sim):
+class Player:
+    def __init__(self, number, colour):
+        self.Number = number
+        self.Colour = colour
+    
+    def take_turn(self, board):
+        can_end_turn = False
+        board.draw()
+        pygame.display.update()
+        held_down = False
+        while True:
+            check_quit(pygame.event.get())
+            x, y = pygame.mouse.get_pos()
+            a, b = get_square(x, y, board)
+            last_click = [0, 0, True]
+            if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
+                if pygame.mouse.get_pressed()[0] and not held_down:
+                    board.show_future(a, b, False, self.Number)
+                    can_end_turn = True
+                    last_click = [a, b, False]
+                    held_down = True
+                elif pygame.mouse.get_pressed()[2] and not held_down:
+                    board.show_future(a, b, True, self.Number)
+                    can_end_turn = True
+                    last_click = [a, b, True]
+                    held_down = True
+                if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]) and held_down:
+                    held_down = False
+            if can_end_turn and pygame.key.get_pressed()[pygame.K_SPACE]:
+                return last_click
+
+
+def check_user_input(sim, board):
     """Checks for user input and acts accordingly"""
-
+    
     check_quit(pygame.event.get())
     x, y = pygame.mouse.get_pos()
-    a = x // Board.Size + Board.Cushion
-    b = y // Board.Size + Board.Cushion
+    a, b = get_square(x, y, board)
     if sim.CanBePaused:
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             sim.Paused = not sim.Paused
@@ -193,7 +272,7 @@ def check_user_input(sim):
             sim.CanBePaused = True
     for key in range(pygame.K_1, pygame.K_9):
         if pygame.key.get_pressed()[key]:
-            Board.place_preset(int(pygame.key.name(key)), a, b)
+            board.place_preset(int(pygame.key.name(key)), a, b)
     if sim.CanChangeGPSLimit:
         if pygame.key.get_pressed()[pygame.K_f]:
             sim.GPSIsLimited = not sim.GPSIsLimited
@@ -214,11 +293,11 @@ def check_user_input(sim):
             sim.CanGoForward = True
         sim.OneTurn = False
     if pygame.key.get_pressed()[pygame.K_RETURN]:
-        Board.reset(sim)
+        board.reset(sim)
         sim.Paused = True
     if pygame.mouse.get_pressed()[0]:
-        if Board.Size * Board.Width + Board.Edge / 2 < x < Board.Size * Board.Width + Sim.ButtonSize + \
-                        Board.Edge / 2:  # within the button+GPS slider area
+        if board.Size * board.Width + board.Edge / 2 < x < board.Size * board.Width + Sim.ButtonSize + \
+                        board.Edge / 2:  # within the button+GPS slider area
             if y < Sim.StartOfSlider:
                 y = Sim.StartOfSlider
             elif y > Sim.EndOfSlider:
@@ -229,15 +308,15 @@ def check_user_input(sim):
             sim.GPS = sim.TopGPS ** (((1 - bottom_gps_log) * (Sim.EndOfSlider - y) /
                                       (
                                           Sim.EndOfSlider - Sim.StartOfSlider)) + bottom_gps_log)
-        elif 0 <= a < Board.Width + Board.Cushion and 0 <= b < Board.Height + Board.Cushion:
-            Board.Cell[a][b].birth(config.Square, Sim.Colour["Alive"])
-            Board.update()
-            Board.draw()
+        elif 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
+            board.Cell[a][b].birth(config.Square, 0)
+            board.update()
+            board.draw()
     if pygame.mouse.get_pressed()[2]:
-        Board.Cell[a][b].kill()
-        Board.update()
-        Board.draw()
-
+        board.Cell[a][b].kill()
+        board.update()
+        board.draw()
+    
     return sim
 
 
@@ -308,16 +387,16 @@ def get_menu_choice(menu, screen):
     border_col = menu.Colour["Border"]
     text_col = menu.Colour["Text"]
     hover_col = menu.Colour["Hover"]
-
+    
     centre = [screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5]
     for a in range(2):
         pygame.draw.rect(screen, border_col, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
         pygame.draw.rect(screen, menu.Colour["Background"], (
             (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
         centre = [screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5]
-
+    
     write(screen, screen.get_width() / 2, size * 2, "Main Menu", text_col, size, alignment=("centre", "centre"))
-
+    
     while True:
         check_quit(pygame.event.get())
         x, y = pygame.mouse.get_pos()
@@ -332,12 +411,12 @@ def get_menu_choice(menu, screen):
                 if pygame.mouse.get_pressed()[0]:
                     return "Game"
                 bottom_colour = hover_col
-
+        
         write(screen, screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5, "Simulator", top_colour,
               int(size / 1.5), alignment=("centre", "centre"))
         write(screen, screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5, "2-Player Game", bottom_colour,
               int(size / 1.5), alignment=("centre", "centre"))
-
+        
         pygame.display.update()
 
 
@@ -347,6 +426,10 @@ def check_quit(events):
             pygame.quit()
             import sys
             sys.exit(0)
+
+
+def get_square(x, y, board):
+    return x // board.Size + board.Cushion, y // board.Size + board.Cushion
 
 
 pygame.init()
@@ -367,15 +450,15 @@ if get_menu_choice(config.Menu(), Screen) == "Sim":
     Board.update()
     for _ in range(int(Board.Width * Board.Height / 10)):
         Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
-            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2),
-                                                                                   Sim.Colour["Alive"])
+            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2), 0)
     Board.update()
     Board.draw()
-
+    
     while True:
-        Sim = check_user_input(Sim)
+        Sim = check_user_input(Sim, Board)
         Board.update()
-        if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) or (Sim.Paused and Sim.OneTurn):
+        if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) or (
+                    Sim.Paused and Sim.OneTurn):
             if Sim.OneTurn:
                 Sim.OneTurn = False
             Board.take_turn()
@@ -385,6 +468,22 @@ if get_menu_choice(config.Menu(), Screen) == "Sim":
             LastFrame = time.time()
 
 else:
-    Player1 = False
+    Game = config.Game()
+    PlayerNo = 2
+    Board = Board(Game)
+    Board.update()
+    for _ in range(int(Board.Width * Board.Height / 10)):
+        p = random.randint(1, Game.NoOfPlayers)
+        Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
+            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(config.Square, p)
+    Board.update()
+    Board.draw()
+    Screen = pygame.display.set_mode((Board.Size * Board.Width, Board.Size * Board.Height))
+    Screen.fill(Game.Colour["Background"])
+    Players = [Player(n, Game.Colour["Player" + str(n)]) for n in range(1, Game.NoOfPlayers + 1)]
     while True:
-        Player1 = not Player1
+        if PlayerNo == Game.NoOfPlayers:
+            PlayerNo = 1
+        else:
+            PlayerNo += 1
+        Players[PlayerNo - 1].take_turn(Board)
