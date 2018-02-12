@@ -6,6 +6,7 @@ import config
 import preset
 import time
 import random
+import copy
 
 
 class Cell:
@@ -13,15 +14,11 @@ class Cell:
         """a,b are the coordinates of the cell the instance represents."""
         self.CurrentState = current_state
         self.NextState = next_state
+        self.CurrentPlayer = 0
+        self.NextPlayer = player
         self.BoardPos = (a, b)
         self.Coordinates = ((self.BoardPos[0] - board.Cushion) * board.Size + board.Edge / 2,
                             (self.BoardPos[1] - board.Cushion) * board.Size + board.Edge / 2)
-        self.CurrentPlayer = 0
-        self.NextPlayer = player
-        if self.CurrentPlayer == 0:
-            self.Colour = board.Colour["Alive"]
-        else:
-            self.Colour = board.Colour["Player" + str(player)]
     
     def kill(self):
         self.NextState = config.Dead
@@ -71,23 +68,31 @@ class Cell:
             total[board.Cell[ar][bd].CurrentState] += 1
             player[board.Cell[ar][bd].CurrentPlayer] += 1
         
-        new_state = config.Dead
-        new_player = 0
+        new_state = self.CurrentState
+        new_player = self.CurrentPlayer
         birth = False
+        death = False
         if self.CurrentState == config.Dead:
             if total[config.Dead] == 5:  # if 5 dead cells; ie. if 3 alive cells
                 birth = True
         elif self.CurrentState == config.Square:
-            if total[config.Dead] in (5, 6):
-                birth = True
+            if total[config.Dead] not in (5, 6):
+                death = True
         elif self.CurrentState == config.Hex:
-            if total[config.Dead] in (2, 3):
-                birth = True
+            if total[config.Dead] not in (2, 3):
+                death = True
         if birth:
             del total[0]
             new_state = total.index(max(total)) + 1
             del player[0]
-            new_player = player.index(max(player)) + 1
+            if sum(player) == 0:
+                new_player = 0
+            else:
+                new_player = player.index(max(player)) + 1
+        
+        if death:
+            new_state = config.Dead
+            new_player = 0
         
         return new_state, new_player
     
@@ -212,9 +217,9 @@ class Board:
         self.__init__(state)
         self.update()
         self.draw()
-    
+
     def show_future(self, a, b, kill, player):
-        temp_board = self
+        temp_board = copy.deepcopy(self)
         if kill:
             temp_board.Cell[a][b].kill()
         else:
@@ -450,7 +455,7 @@ if get_menu_choice(config.Menu(), Screen) == "Sim":
     Board.update()
     for _ in range(int(Board.Width * Board.Height / 10)):
         Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
-            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(random.randint(1, 2), 0)
+            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(config.Square, 0)
     Board.update()
     Board.draw()
     
