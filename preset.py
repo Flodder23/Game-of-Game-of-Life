@@ -1,52 +1,49 @@
-import config
-
-
-def get(shape_no, a, b):
+def get(shape_no, a, b, state):
     """Returns a preset shape."""
     if shape_no == 1:
-        if a + 2 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 3
-        if b + 2 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 3
+        if a + 2 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 3
+        if b + 2 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 3
         shape = [[0, 1, 0],
                  [0, 0, 1],
                  [1, 1, 1]]
 
     elif shape_no == 2:
-        if a + 2 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 3
-        if b + 3 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 4
+        if a + 2 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 3
+        if b + 3 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 4
         shape = [[0, 1, 0],
                  [1, 1, 1],
                  [1, 0, 1],
                  [0, 1, 0]]
 
     elif shape_no == 3:
-        if a + 3 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 5
-        if b + 4 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 5
+        if a + 3 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 5
+        if b + 4 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 5
         c = [1, 0, 1, 0, 1]
         d = [1, 0, 0, 0, 1]
 
         shape = [c, d, d, d, c]
 
     elif shape_no == 4:
-        if a + 5 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 5
-        if b + 4 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 4
+        if a + 5 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 5
+        if b + 4 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 4
         shape = [[0, 1, 1, 1, 1],
                  [1, 0, 0, 0, 1],
                  [0, 0, 0, 0, 1],
                  [1, 0, 0, 1, 0]]
 
     elif shape_no == 5:
-        if a + 7 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 7
-        if b + 6 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 6
+        if a + 7 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 7
+        if b + 6 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 6
         shape = [[0, 1, 1, 0, 1, 1, 0],
                  [0, 1, 1, 0, 1, 1, 0],
                  [0, 0, 1, 0, 1, 0, 0],
@@ -55,10 +52,10 @@ def get(shape_no, a, b):
                  [1, 1, 0, 0, 0, 1, 1]]
 
     elif shape_no == 6:
-        if a + 38 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 38
-        if b + 15 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 15
+        if a + 38 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 38
+        if b + 15 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 15
         shape = [[0 for _ in range(15)] for _ in range(38)]
         to_be_birthed = [[23, 24, 34, 35],  # 0
                          [22, 24, 34, 35],
@@ -80,15 +77,15 @@ def get(shape_no, a, b):
                 shape[d][c] = 1
 
     elif shape_no == 7:
-        if a + 10 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 12
+        if a + 10 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 12
         shape = [[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]]
 
     elif shape_no == 8:
-        if a + 3 >= config.Width + config.Cushion:
-            a = config.Width + config.Cushion - 3
-        if b + 3 >= config.Height + config.Cushion:
-            b = config.Height + config.Cushion - 3
+        if a + 3 >= state.Width + state.Cushion:
+            a = state.Width + state.Cushion - 3
+        if b + 3 >= state.Height + state.Cushion:
+            b = state.Height + state.Cushion - 3
         shape = [[0, 1, 0], [1, 1, 1], [1, 0, 0]]
 
     else: shape = [[0]]
