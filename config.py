@@ -67,10 +67,10 @@ class Game:
     """Change these values to change how the game looks in 2-Player mode."""
     
     def __init__(self):
-        self.Width = 50  # C 50 How many squares wide the board is
-        self.Height = 30  # C 30 Ditto but with height
-        self.Size = 20  # C 20 The size of the sides of each square (in pixels)
-        self.Edge = self.Size // 7  # C Size / 15 The gap between each cell
+        self.Width = 25  # C 50 How many squares wide the board is
+        self.Height = 15  # C 30 Ditto but with height
+        self.Size = 35  # C 20 The size of the sides of each square (in pixels)
+        self.Edge = 2  # C 2 The gap between each cell
         self.Wrap = True
         self.Cushion = 0
         self.NoOfPlayers = 2  # How many players there are - 2 or 4

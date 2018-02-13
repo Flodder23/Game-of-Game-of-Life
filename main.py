@@ -177,7 +177,7 @@ class Board:
                 self.Cell[a][b].update()
     
     def take_turn(self):
-        """Changes the CurrentState variables & updates display caption"""
+        """Changes the NextState variables & updates display caption"""
         pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
         if self.Wrap:
             cushion = 0
@@ -185,14 +185,15 @@ class Board:
             cushion = 1
         for a in range(cushion, self.Width + (2 * self.Cushion) - cushion):  # Goes through all cells and kills
             for b in range(cushion, self.Height + (2 * self.Cushion) - cushion):  # those that will die and births
-                fate, player = Board.Cell[a][b].check_fate(self)  # those that will be born.
-                if fate == config.Dead:
-                    self.Cell[a][b].kill()
-                else:
-                    if player == 0:
-                        self.Cell[a][b].birth(fate, 0)
+                fate, player = self.Cell[a][b].check_fate(self)  # those that will be born.
+                if self.Cell[a][b].CurrentState != fate or self.Cell[a][b].CurrentPlayer != player:
+                    if fate == config.Dead:
+                        self.Cell[a][b].kill()
                     else:
-                        self.Cell[a][b].birth(fate, player)
+                        if player == 0:
+                            self.Cell[a][b].birth(fate, 0)
+                        else:
+                            self.Cell[a][b].birth(fate, player)
     
     def place_preset(self, preset_no, a, b):
         if self.Wrap:
@@ -224,6 +225,7 @@ class Board:
             temp_board.Cell[a][b].kill()
         else:
             temp_board.Cell[a][b].birth(config.Square, player)
+        temp_board.Cell[a][b].update()
         temp_board.draw()
         temp_board.take_turn()
         temp_board.update()
@@ -238,13 +240,13 @@ class Player:
     def take_turn(self, board):
         can_end_turn = False
         board.draw()
+        last_click = [0, 0, True]
         pygame.display.update()
         held_down = False
         while True:
             check_quit(pygame.event.get())
             x, y = pygame.mouse.get_pos()
             a, b = get_square(x, y, board)
-            last_click = [0, 0, True]
             if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
                 if pygame.mouse.get_pressed()[0] and not held_down:
                     board.show_future(a, b, False, self.Number)
@@ -491,4 +493,13 @@ else:
             PlayerNo = 1
         else:
             PlayerNo += 1
-        Players[PlayerNo - 1].take_turn(Board)
+        Turn = Players[PlayerNo - 1].take_turn(Board)
+        print(Turn)
+        if Turn[2]:
+            Board.Cell[Turn[0]][Turn[1]].kill()
+        else:
+            Board.Cell[Turn[0]][Turn[1]].birth(config.Square, PlayerNo)
+        Board.Cell[Turn[0]][Turn[1]].update()
+        Board.take_turn()
+        Board.update()
+        Board.draw()
