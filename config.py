@@ -28,7 +28,7 @@ class Sim:
         self.Height = 30  # C 30 Ditto but with height
         self.Size = 20  # C 20 The size of the sides of each square (in pixels)
         self.Edge = self.Size // 7  # C Size / 15 The gap between each cell
-        self.Wrap = True  # Whether the board wraps around on itself
+        self.Wrap = False  # Whether the board wraps around on itself
         if self.Wrap:
             self.Cushion = 0
         else:

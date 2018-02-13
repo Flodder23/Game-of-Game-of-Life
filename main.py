@@ -436,8 +436,8 @@ def check_quit(events):
 
 
 def get_square(x, y, board):
-    a = min(x // board.Size + board.Cushion, board.Width)
-    b = min(y // board.Size + board.Cushion, board.Height)
+    a = min(x // board.Size, board.Width) + board.Cushion
+    b = min(y // board.Size, board.Height) + board.Cushion
     return a, b
 
 
