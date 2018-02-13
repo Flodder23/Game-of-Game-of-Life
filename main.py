@@ -218,7 +218,7 @@ class Board:
         self.__init__(state)
         self.update()
         self.draw()
-
+    
     def show_future(self, a, b, kill, player):
         temp_board = copy.deepcopy(self)
         if kill:
@@ -258,8 +258,8 @@ class Player:
                     can_end_turn = True
                     last_click = [a, b, True]
                     held_down = True
-                if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]) and held_down:
-                    held_down = False
+            if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]) and held_down:
+                held_down = False
             if can_end_turn and pygame.key.get_pressed()[pygame.K_SPACE]:
                 return last_click
 
@@ -436,7 +436,9 @@ def check_quit(events):
 
 
 def get_square(x, y, board):
-    return x // board.Size + board.Cushion, y // board.Size + board.Cushion
+    a = min(x // board.Size + board.Cushion, board.Width)
+    b = min(y // board.Size + board.Cushion, board.Height)
+    return a, b
 
 
 pygame.init()
