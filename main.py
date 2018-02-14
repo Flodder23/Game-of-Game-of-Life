@@ -244,7 +244,8 @@ class Player:
         pygame.display.update()
         held_down = False
         while True:
-            check_quit(pygame.event.get())
+            if check_quit(pygame.event.get()):
+                return "Go Back"
             x, y = pygame.mouse.get_pos()
             a, b = get_square(x, y, board)
             if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
@@ -267,7 +268,7 @@ class Player:
 def check_user_input(sim, board):
     """Checks for user input and acts accordingly"""
     
-    check_quit(pygame.event.get())
+    go_back = check_quit(pygame.event.get())
     x, y = pygame.mouse.get_pos()
     a, b = get_square(x, y, board)
     if sim.CanBePaused:
@@ -286,7 +287,7 @@ def check_user_input(sim, board):
             bottom_gps_log = maths.log(sim.BottomGPS, sim.TopGPS)
             draw_gps_slider(Sim.EndOfSlider - ((maths.log(sim.GPS, sim.TopGPS) - bottom_gps_log) *
                                                (Sim.EndOfSlider - Sim.StartOfSlider)) /
-                            (1 - bottom_gps_log), sim.GPSIsLimited)
+                            (1 - bottom_gps_log), sim.GPSIsLimited, board)
             sim.CanChangeGPSLimit = False
     else:
         if not pygame.key.get_pressed()[pygame.K_f]:
@@ -310,7 +311,7 @@ def check_user_input(sim, board):
             elif y > Sim.EndOfSlider:
                 y = Sim.EndOfSlider
                 sim.GPSIsLimited = True
-            draw_gps_slider(y, sim.GPSIsLimited)
+            draw_gps_slider(y, sim.GPSIsLimited, board)
             bottom_gps_log = maths.log(sim.BottomGPS, sim.TopGPS)
             sim.GPS = sim.TopGPS ** (((1 - bottom_gps_log) * (Sim.EndOfSlider - y) /
                                       (
@@ -324,10 +325,10 @@ def check_user_input(sim, board):
         board.update()
         board.draw()
     
-    return sim
+    return sim, go_back
 
 
-def draw_gps_slider(y, gps_limit):
+def draw_gps_slider(y, gps_limit, board):
     """Draws the slider with the y coordinate of the button click
        (How many GPS this corresponds to is not dealt with here.)"""
     if y < Sim.StartOfSlider:
@@ -336,7 +337,7 @@ def draw_gps_slider(y, gps_limit):
         y = Sim.EndOfSlider
     pygame.draw.rect(Screen, Sim.Colour["Background"],
                      ((Sim.ButtonStart, Sim.StartOfSlider - Sim.NotchLength),
-                      (Sim.ButtonStart + Board.Edge + Sim.HighlightSize +
+                      (Sim.ButtonStart + board.Edge + Sim.HighlightSize +
                        Sim.ButtonSize, Sim.EndOfSlider)))
     pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY, Sim.StartOfSlider),
                      (Sim.SliderY,
@@ -396,44 +397,49 @@ def get_menu_choice(menu, screen):
     text_col = menu.Colour["Text"]
     hover_col = menu.Colour["Hover"]
     
-    centre = [screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5]
-    for a in range(2):
+    buttons = [[screen.get_width() / 2, (screen.get_height() / 2) + size * ((3 * a) - 1.5),
+                ("Simulator", "2-Player Game", "Help")[a], text_col] for a in range(3)]
+    for a in range(3):
+        centre = buttons[a]
         pygame.draw.rect(screen, border_col, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
         pygame.draw.rect(screen, menu.Colour["Background"], (
             (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
-        centre = [screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5]
     
     write(screen, screen.get_width() / 2, size * 2, "Main Menu", text_col, size, alignment=("centre", "centre"))
     
     while True:
-        check_quit(pygame.event.get())
+        if check_quit(pygame.event.get()):
+            quit_game()
         x, y = pygame.mouse.get_pos()
-        top_colour = text_col
-        bottom_colour = text_col
+        for a in range(3):
+            buttons[a][3] = text_col
         if screen.get_width() / 2 - 5 * size < x < screen.get_width() / 2 + 5 * size:
-            if (screen.get_height() / 2) - size * 1.5 - size < y < (screen.get_height() / 2) - size * 1.5 + size:
-                if pygame.mouse.get_pressed()[0]:
-                    return "Sim"
-                top_colour = hover_col
-            elif (screen.get_height() / 2) + size * 0.5 < y < (screen.get_height() / 2) + size * 2.5:
-                if pygame.mouse.get_pressed()[0]:
-                    return "Game"
-                bottom_colour = hover_col
-        
-        write(screen, screen.get_width() / 2, (screen.get_height() / 2) - size * 1.5, "Simulator", top_colour,
-              int(size / 1.5), alignment=("centre", "centre"))
-        write(screen, screen.get_width() / 2, (screen.get_height() / 2) + size * 1.5, "2-Player Game", bottom_colour,
-              int(size / 1.5), alignment=("centre", "centre"))
+            for a in range(3):
+                if (screen.get_height() / 2) + size * ((3 * a) - 2.5) < y < (screen.get_height() / 2) + size * (
+                            (3 * a) - 0.5):
+                    if pygame.mouse.get_pressed()[0]:
+                        return buttons[a][2]
+                    buttons[a][3] = hover_col
+        for a in range(3):
+            write(screen, screen.get_width() / 2, (screen.get_height() / 2) + size * ((3 * a) - 1.5), buttons[a][2],
+                  buttons[a][3], int(size / 1.5), alignment=("centre", "centre"))
         
         pygame.display.update()
 
 
 def check_quit(events):
     for event in events:
-        if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            pygame.quit()
-            import sys
-            sys.exit(0)
+        if event.type == pygame.QUIT:
+            quit_game()
+        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+            return True
+    return False
+
+
+def quit_game():
+    pygame.quit()
+    import sys
+    sys.exit(0)
 
 
 def get_square(x, y, board):
@@ -449,60 +455,67 @@ for event in allowed_events:
     pygame.event.set_allowed(event)
 Screen = pygame.display.set_mode((1, 1))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
+Sim = config.Sim()
+SimBoard = Board(Sim)
+for _ in range(int(SimBoard.Width * SimBoard.Height / 10)):
+    SimBoard.Cell[random.randint(SimBoard.Cushion, SimBoard.Cushion + SimBoard.Width - 1)][
+        random.randint(SimBoard.Cushion, SimBoard.Cushion + SimBoard.Height - 1)].birth(config.Square, 0)
+Game = config.Game()
+GameBoard = Board(Game)
+for _ in range(int(GameBoard.Width * GameBoard.Height / 10)):
+    p = random.randint(1, Game.NoOfPlayers)
+    GameBoard.Cell[random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Width - 1)][
+        random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Height - 1)].birth(config.Square, p)
 
-if get_menu_choice(config.Menu(), Screen) == "Sim":
-    Sim = config.Sim()
-    Board = Board(Sim)
-    Screen = pygame.display.set_mode((Board.Size * Board.Width + Sim.ButtonSize, Board.Size * Board.Height))
-    Screen.fill(Sim.Colour["Background"])
-    draw_gps_slider(((maths.log(Sim.GPS, 10) + 1) / -3) * (Sim.EndOfSlider - Sim.StartOfSlider) + Sim.EndOfSlider,
-                    Sim.GPSIsLimited)
-    LastFrame = time.time()  # The time when the last frame update happened
-    Board.update()
-    for _ in range(int(Board.Width * Board.Height / 10)):
-        Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
-            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(config.Square, 0)
-    Board.update()
-    Board.draw()
+while True:
+    MenuChoice = get_menu_choice(config.Menu(), Screen)
+    if MenuChoice == "Simulator":
+        Screen = pygame.display.set_mode(
+            (SimBoard.Size * SimBoard.Width + Sim.ButtonSize, SimBoard.Size * SimBoard.Height))
+        Screen.fill(Sim.Colour["Background"])
+        draw_gps_slider(((maths.log(Sim.GPS, 10) + 1) / -3) * (Sim.EndOfSlider - Sim.StartOfSlider) + Sim.EndOfSlider,
+                        Sim.GPSIsLimited, SimBoard)
+        LastFrame = time.time()  # The time when the last frame update happened
+        SimBoard.update()
+        SimBoard.update()
+        SimBoard.draw()
+        
+        while True:
+            Sim, GoBack = check_user_input(Sim, SimBoard)
+            if GoBack:
+                break
+            SimBoard.update()
+            if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) or (
+                        Sim.Paused and Sim.OneTurn):
+                if Sim.OneTurn:
+                    Sim.OneTurn = False
+                SimBoard.take_turn()
+                SimBoard.update()
+                SimBoard.Generations += 1
+                SimBoard.draw()
+                LastFrame = time.time()
     
-    while True:
-        Sim = check_user_input(Sim, Board)
-        Board.update()
-        if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) or (
-                    Sim.Paused and Sim.OneTurn):
-            if Sim.OneTurn:
-                Sim.OneTurn = False
-            Board.take_turn()
-            Board.update()
-            Board.Generations += 1
-            Board.draw()
-            LastFrame = time.time()
-
-else:
-    Game = config.Game()
-    PlayerNo = 2
-    Board = Board(Game)
-    Board.update()
-    for _ in range(int(Board.Width * Board.Height / 10)):
-        p = random.randint(1, Game.NoOfPlayers)
-        Board.Cell[random.randint(Board.Cushion, Board.Cushion + Board.Width - 1)][
-            random.randint(Board.Cushion, Board.Cushion + Board.Height - 1)].birth(config.Square, p)
-    Board.update()
-    Board.draw()
-    Screen = pygame.display.set_mode((Board.Size * Board.Width, Board.Size * Board.Height))
-    Screen.fill(Game.Colour["Background"])
-    Players = [Player(n, Game.Colour["Player" + str(n)]) for n in range(1, Game.NoOfPlayers + 1)]
-    while True:
-        if PlayerNo == Game.NoOfPlayers:
-            PlayerNo = 1
-        else:
-            PlayerNo += 1
-        Turn = Players[PlayerNo - 1].take_turn(Board)
-        if Turn[2]:
-            Board.Cell[Turn[0]][Turn[1]].kill()
-        else:
-            Board.Cell[Turn[0]][Turn[1]].birth(config.Square, PlayerNo)
-        Board.Cell[Turn[0]][Turn[1]].update()
-        Board.take_turn()
-        Board.update()
-        Board.draw()
+    elif MenuChoice == "2-Player Game":
+        PlayerNo = 2
+        GameBoard.update()
+        GameBoard.update()
+        GameBoard.draw()
+        Screen = pygame.display.set_mode((GameBoard.Size * GameBoard.Width, GameBoard.Size * GameBoard.Height))
+        Screen.fill(Game.Colour["Background"])
+        Players = [Player(n, Game.Colour["Player" + str(n)]) for n in range(1, Game.NoOfPlayers + 1)]
+        while True:
+            if PlayerNo == Game.NoOfPlayers:
+                PlayerNo = 1
+            else:
+                PlayerNo += 1
+            Turn = Players[PlayerNo - 1].take_turn(GameBoard)
+            if Turn == "Go Back":
+                break
+            if Turn[2]:
+                GameBoard.Cell[Turn[0]][Turn[1]].kill()
+            else:
+                GameBoard.Cell[Turn[0]][Turn[1]].birth(config.Square, PlayerNo)
+            GameBoard.Cell[Turn[0]][Turn[1]].update()
+            GameBoard.take_turn()
+            GameBoard.update()
+            GameBoard.draw()

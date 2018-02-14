@@ -13,7 +13,7 @@ class Menu:
         self.TextColour = (255, 255, 255)
         self.HoverColour = (0, 255, 100)
         self.Width = 1000
-        self.Height = 600
+        self.Height = 650
         self.Colour = {"Border": (255, 255, 255),
                        "Text": (255, 255, 255),
                        "Hover": (0, 255, 100),
