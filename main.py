@@ -496,7 +496,6 @@ else:
         else:
             PlayerNo += 1
         Turn = Players[PlayerNo - 1].take_turn(Board)
-        print(Turn)
         if Turn[2]:
             Board.Cell[Turn[0]][Turn[1]].kill()
         else:
