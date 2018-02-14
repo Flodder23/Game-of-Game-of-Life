@@ -27,12 +27,9 @@ class Sim:
         self.Width = 50  # C 50 How many squares wide the board is
         self.Height = 30  # C 30 Ditto but with height
         self.Size = 20  # C 20 The size of the sides of each square (in pixels)
-        self.Edge = self.Size // 7  # C Size / 15 The gap between each cell
+        self.Edge = 2  # C Size / 15 The gap between each cell
         self.Wrap = False  # Whether the board wraps around on itself
-        if self.Wrap:
-            self.Cushion = 0
-        else:
-            self.Cushion = 10  # C 10 How far the board extends beyond the visible amount
+        self.Cushion = 10  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
         
         self.NoOfButtons = 0
@@ -73,7 +70,8 @@ class Game:
         self.Edge = 2  # C 2 The gap between each cell
         self.Wrap = True
         self.Cushion = 0
-        self.NoOfPlayers = 2  # How many players there are - 2 or 4
+        self.NoOfPlayers = 2  # C How many players there are - 2 or 4
+        self.PlayerNames = ["Joe", "Adam"]  # C Player's names
         self.PreviewSize = self.Size // 2
         self.Colour = {"Alive": (0, 0, 0),
                        "Player1": (0, 255, 100),

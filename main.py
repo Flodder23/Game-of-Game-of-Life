@@ -388,6 +388,7 @@ def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top"))
 
 def get_menu_choice(menu, screen):
     pygame.display.set_mode((menu.Width, menu.Height))
+    pygame.display.set_caption("Game of Life - Main Menu")
     screen.fill(menu.Colour["Background"])
     size = menu.ButtonSize
     border = menu.ButtonBorder
@@ -443,10 +444,11 @@ def get_square(x, y, board):
 
 pygame.init()
 pygame.event.set_allowed(None)
-allowed_events = [pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT]
+allowed_events = (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT)
 for event in allowed_events:
     pygame.event.set_allowed(event)
 Screen = pygame.display.set_mode((1, 1))
+pygame.display.set_icon(pygame.image.load("Icon.png"))
 
 if get_menu_choice(config.Menu(), Screen) == "Sim":
     Sim = config.Sim()
@@ -496,7 +498,6 @@ else:
         else:
             PlayerNo += 1
         Turn = Players[PlayerNo - 1].take_turn(Board)
-        print(Turn)
         if Turn[2]:
             Board.Cell[Turn[0]][Turn[1]].kill()
         else:
