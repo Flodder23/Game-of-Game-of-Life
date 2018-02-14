@@ -448,6 +448,22 @@ def get_square(x, y, board):
     return a, b
 
 
+def display_help(state, screen):
+    pygame.display.set_caption("Game of Life - Help")
+    pygame.display.set_mode((state.Width, state.Height))
+    screen.fill(state.Background)
+    for a in range(len(state.Text)):
+        write(screen, state.GapSize + a * (state.Width / len(state.Text) + state.GapSize), state.GapSize, state.Text[a][0], state.TextColour, state.TitleSize)
+        for b in range(len(state.Text[a][1].split("\n"))):
+            write(screen, state.GapSize + a * (state.Width / len(state.Text) + state.GapSize),
+                  state.GapSize + state.TitleSize + b * (state.GapSize + state.TextSize) + 4, state.Text[a][1].split("\n")[b], state.TextColour,
+                  state.TextSize)
+    pygame.display.update()
+    go_back = False
+    while not go_back:
+        go_back = check_quit(pygame.event.get())
+
+
 pygame.init()
 pygame.event.set_allowed(None)
 allowed_events = (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT)
@@ -466,6 +482,7 @@ for _ in range(int(GameBoard.Width * GameBoard.Height / 10)):
     p = random.randint(1, Game.NoOfPlayers)
     GameBoard.Cell[random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Width - 1)][
         random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Height - 1)].birth(config.Square, p)
+Help = config.Help()
 
 while True:
     MenuChoice = get_menu_choice(config.Menu(), Screen)
@@ -519,3 +536,6 @@ while True:
             GameBoard.take_turn()
             GameBoard.update()
             GameBoard.draw()
+    
+    else:
+        display_help(Help, Screen)
