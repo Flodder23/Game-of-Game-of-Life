@@ -14,7 +14,6 @@ Controls are as follows:
     - 1 - Glider
     - 2 - Small Exploder
     - 3 - Exploder
-    - 4 - Pentadecathlon
     - 4 - Light Weight Space Ship
     - 5 - Tumbler
     - 6 - Gosper Glider Gun
