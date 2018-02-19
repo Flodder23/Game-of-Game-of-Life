@@ -1,7 +1,7 @@
 Dead = 0
 Square = 1
 Hex = 2
-Font = "berlinsansfb"
+Font = "boring"
 
 
 class Menu:
@@ -29,6 +29,7 @@ class Sim:
         self.Wrap = False  # Whether the board wraps around on itself
         self.Cushion = 10  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
+        self.SetUpBirthChances = (0, 0)
         
         self.NoOfButtons = 0
         self.ButtonSize = 50
@@ -71,6 +72,7 @@ class Game:
         self.NoOfPlayers = 2  # C How many players there are - 2 or 4
         self.PlayerNames = ["Joe", "Adam"]  # C Player's names
         self.PreviewSize = self.Size // 2
+        self.SetUpBirthChances = (10, 1, 1, 1, 1)[:self.NoOfPlayers+1]
         self.Colour = {"Alive": (0, 0, 0),
                        "Player1": (0, 255, 100),
                        "Player2": (0, 100, 255),

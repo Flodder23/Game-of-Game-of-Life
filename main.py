@@ -159,6 +159,19 @@ class Board:
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
     
+    def set_up(self, chance):
+        tot = [0, 0, 0]
+        for a in range(self.Width):
+            for b in range(self.Height):
+                n = random.randint(0, sum(chance))
+                for c in range(len(chance)):
+                    if sum(chance[:c+1]) >= n:
+                        if c != 0:
+                            self.Cell[a][b].birth(config.Square, c)
+                            tot[c] += 1
+                        tot[0] += 1
+                        break
+    
     def draw(self, preview=False):
         """draws the current board onto the screen then updates the display"""
         if preview:
@@ -484,11 +497,12 @@ def display_help(state, screen):
     help_text = open("help.txt").read().split("++")
     for section in range(len(help_text)):
         help_text[section] = help_text[section].split("\n")
-    xtra_line = 0
+    xtra_line = 20  # Placeholder value so the screen doesn't disappear completely
     for _ in range(2):
         text = help_text
         pygame.display.set_mode((state.Width, xtra_line * (state.GapSize + state.TextSize) + 2 * state.GapSize))
         screen.fill(state.Colour["Background"])
+        pygame.display.update()
         xtra_line = 0
         for line in text[0]:
             if line.startswith("**"):
@@ -505,8 +519,6 @@ def display_help(state, screen):
                                size,
                                max_len=int((
                                                state.Width - 2 * state.GapSize - 2 * state.SliderGap - state.SliderWidth) / 2 - indent * state.IndentSize))
-    
-    xtra_line = 0
     for _ in range(2):
         help_surface = pygame.Surface((int((state.Width - state.SliderWidth) / 2) - state.GapSize - state.SliderGap,
                                        xtra_line * (state.TextSize + state.GapSize)))
@@ -577,15 +589,11 @@ Screen = pygame.display.set_mode((1, 1))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
 SimBoard = Board(Sim)
-for _ in range(int(SimBoard.Width * SimBoard.Height / 10)):
-    SimBoard.Cell[random.randint(SimBoard.Cushion, SimBoard.Cushion + SimBoard.Width - 1)][
-        random.randint(SimBoard.Cushion, SimBoard.Cushion + SimBoard.Height - 1)].birth(config.Square, 0)
+SimBoard.set_up(Sim.SetUpBirthChances)
 Game = config.Game()
 GameBoard = Board(Game)
-for _ in range(int(GameBoard.Width * GameBoard.Height / 10)):
-    p = random.randint(1, Game.NoOfPlayers)
-    GameBoard.Cell[random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Width - 1)][
-        random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Height - 1)].birth(config.Square, p)
+GameBoard.set_up(Game.SetUpBirthChances)
+    
 Help = config.Help()
 
 while True:
