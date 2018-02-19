@@ -367,24 +367,38 @@ def draw_gps_slider(y, gps_limit, board):
     pygame.display.update()
 
 
-def write(screen, x, y, text, colour, size, rotate=0, alignment=("left", "top")):
+def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Font, rotate=0, alignment=("left", "top")):
     """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
     \"centre\" or \"right\" and the second value can be \"top\", \"centre\" or \"bottom\".
     note that these values relate to x and y respectively whatever the rotation, which is in degrees."""
-    font_obj = pygame.font.Font("freesansbold.ttf", size)
-    msg_surface_obj = pygame.transform.rotate(font_obj.render(text, False, colour), rotate)
-    msg_rect_obj = msg_surface_obj.get_rect()
-    a, b = msg_surface_obj.get_size()
-    if alignment[0] == "centre":
-        x -= a / 2
-    elif alignment[0] == "right":
-        x -= a
-    if alignment[1] == "centre":
-        y -= b / 2
-    elif alignment[1] == "bottom":
-        y -= b
-    msg_rect_obj.topleft = (x, y)
-    screen.blit(msg_surface_obj, msg_rect_obj)
+    font_obj = pygame.font.SysFont(font, size)
+    if text == "":
+        line = 1
+    else:
+        line = 0
+    while len(text.split()) > 0:
+        line += 1
+        msg_surface_obj = pygame.transform.rotate(font_obj.render(text, False, colour), rotate)
+        used = len(text.split())
+        while max_len is not None and msg_surface_obj.get_width() > max_len:
+            used -= 1
+            msg_surface_obj = pygame.transform.rotate(font_obj.render(" ".join(text.split()[:used]), False, colour),
+                                                      rotate)
+        msg_rect_obj = msg_surface_obj.get_rect()
+        a, b = msg_surface_obj.get_size()
+        if alignment[0] == "centre":
+            x -= a / 2
+        elif alignment[0] == "right":
+            x -= a
+        if alignment[1] == "centre":
+            y -= b / 2
+        elif alignment[1] == "bottom":
+            y -= b
+        msg_rect_obj.topleft = (x, y)
+        screen.blit(msg_surface_obj, msg_rect_obj)
+        y += size + gap
+        text = " ".join(text.split()[used:])
+    return line
 
 
 def get_menu_choice(menu, screen):
@@ -448,20 +462,110 @@ def get_square(x, y, board):
     return a, b
 
 
+def draw_help(screen, help_surface, state, slider_centre, slider_range):
+    pygame.draw.rect(screen, state.Colour["Background"],
+                     (int((state.Width - state.SliderWidth - state.GapSize) / 2) - state.SliderGap, 0, state.Width,
+                      state.Height))
+    pygame.draw.rect(screen, state.Colour["Slider"], (
+        state.Width - state.SliderGap - state.SliderWidth,
+        slider_centre - state.SliderLength / 2,
+        state.SliderWidth, state.SliderLength))
+    help_rect = help_surface.get_rect()
+    text_range = (state.GapSize, help_surface.get_height() - state.Height + 2 * state.GapSize)
+    top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) / (
+        slider_range[1] - slider_range[0])
+    help_rect.topleft = (int((state.Width - state.SliderWidth) / 2) + state.SliderGap, top_y)
+    screen.blit(help_surface, help_rect)
+    pygame.display.update()
+
+
 def display_help(state, screen):
     pygame.display.set_caption("Game of Life - Help")
-    pygame.display.set_mode((state.Width, state.Height))
-    screen.fill(state.Background)
-    for a in range(len(state.Text)):
-        write(screen, state.GapSize + a * (state.Width / len(state.Text) + state.GapSize), state.GapSize, state.Text[a][0], state.TextColour, state.TitleSize)
-        for b in range(len(state.Text[a][1].split("\n"))):
-            write(screen, state.GapSize + a * (state.Width / len(state.Text) + state.GapSize),
-                  state.GapSize + state.TitleSize + b * (state.GapSize + state.TextSize) + 4, state.Text[a][1].split("\n")[b], state.TextColour,
-                  state.TextSize)
-    pygame.display.update()
-    go_back = False
-    while not go_back:
-        go_back = check_quit(pygame.event.get())
+    help_text = open("help.txt").read().split("++")
+    for section in range(len(help_text)):
+        help_text[section] = help_text[section].split("\n")
+    xtra_line = 0
+    for _ in range(2):
+        text = help_text
+        pygame.display.set_mode((state.Width, xtra_line * (state.GapSize + state.TextSize) + 2 * state.GapSize))
+        screen.fill(state.Colour["Background"])
+        xtra_line = 0
+        for line in text[0]:
+            if line.startswith("**"):
+                size = state.TitleSize
+                line = line[2:]
+            else:
+                size = state.TextSize
+            indent = 0
+            while line.startswith("--"):
+                indent += 1
+                line = line[2:]
+            xtra_line += write(screen, state.GapSize + indent * state.IndentSize,
+                               state.GapSize + xtra_line * (state.GapSize + state.TextSize), line, state.Colour["Text"],
+                               size,
+                               max_len=int((
+                                               state.Width - 2 * state.GapSize - 2 * state.SliderGap - state.SliderWidth) / 2 - indent * state.IndentSize))
+    
+    xtra_line = 0
+    for _ in range(2):
+        help_surface = pygame.Surface((int((state.Width - state.SliderWidth) / 2) - state.GapSize - state.SliderGap,
+                                       xtra_line * (state.TextSize + state.GapSize)))
+        xtra_line = 0
+        help_surface.fill(state.Colour["Background"])
+        for line in text[1]:
+            if line.startswith("**"):
+                size = state.TitleSize
+                line = line[2:]
+            else:
+                size = state.TextSize
+            indent = 0
+            while line.startswith("--"):
+                indent += 1
+                line = line[2:]
+            xtra_line += write(help_surface, indent * state.IndentSize, xtra_line * (state.GapSize + state.TextSize),
+                               line,
+                               state.Colour["Text"],
+                               size, max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.GapSize)
+    state.Height = screen.get_height()
+    slider_range = (state.SliderGap + state.SliderLength / 2, state.Height - state.SliderGap - state.SliderLength / 2)
+    slider_centre = slider_range[0]
+    draw_help(screen, help_surface, state, slider_centre, slider_range)
+    slider_last_turn = False
+    while True:
+        events = pygame.event.get()
+        if check_quit(events):
+            break
+        x, y = pygame.mouse.get_pos()
+        if pygame.mouse.get_pressed()[0]:
+            if not slider_last_turn and state.Width - 2 * state.SliderGap - state.SliderWidth < x < state.Width and slider_centre - state.SliderLength / 2 < y < slider_centre + state.SliderLength / 2:
+                slider_last_turn = True
+                mouse_start = y
+            if slider_last_turn:
+                if slider_centre + y - mouse_start < slider_range[0]:
+                    y = slider_range[0] + mouse_start - slider_centre
+                elif slider_centre + y - mouse_start > slider_range[1]:
+                    y = slider_range[1] + mouse_start - slider_centre
+                draw_help(screen, help_surface, state, slider_centre + y - mouse_start, slider_range)
+        if x > (state.Width - state.SliderWidth - state.GapSize) / 2 - state.SliderGap:
+            for e in events:
+                if e.type == pygame.MOUSEBUTTONDOWN:
+                    draw = False
+                    if e.button == 4:
+                        slider_centre -= state.ScrollAmount
+                        slider_centre = max(slider_centre, slider_range[0])
+                        draw = True
+                    if e.button == 5:
+                        slider_centre += state.ScrollAmount
+                        slider_centre = min(slider_centre, slider_range[1])
+                        draw = True
+                    if draw:
+                        draw_help(screen, help_surface, state, slider_centre, slider_range)
+        
+        else:
+            if slider_last_turn:
+                slider_last_turn = False
+                slider_centre += y - mouse_start
+        pygame.display.update()
 
 
 pygame.init()

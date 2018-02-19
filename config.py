@@ -1,6 +1,7 @@
 Dead = 0
 Square = 1
 Hex = 2
+Font = "berlinsansfb"
 
 
 class Menu:
@@ -84,26 +85,15 @@ class Game:
 class Help:
     def __init__(self):
         self.GapSize = 5
-        self.TextSize = 17
+        self.TextSize = 16
         self.TitleSize = int(self.TextSize * 1.5)
-        self.TextColour = (255, 255, 255)
-        self.Background = (120, 120, 120)
-        self.Width = 1000
-        self.Height = 500
-        self.Text = [["Simulator", """
-Controls are as follows:
-LEFT CLICK to make a Board "alive".
-RIGHT CLICK to Kill a cell.
-Press SPACE to pause/unpause the game.
-Press RIGHT Arrow to move forward a turn when paused.
-Press ENTER to clear the board.
-Presets (Press the corresponding number to place one):
-    1 - Glider
-    2 - Small Exploder
-    3 - Exploder
-    4 - Light Weight Space Ship
-    5 - Tumbler
-    6 - Gosper Glider Gun
-    7 - Pentadecathlon
-    8 - r-Pentomino
-Press ESC to exit to the main menu."""], ["Game", "\nComing soon..."]]
+        self.IndentSize = 40
+        self.SliderWidth = 10
+        self.SliderGap = 5
+        self.SliderLength = 100
+        self.Width = 1000 + self.SliderWidth + self.SliderGap
+        self.Height = 600  # gets changed in the program depending on space taken up by help
+        self.ScrollAmount = 50
+        self.Colour = {"Background": (120, 120, 120),
+                       "Text": (255, 255, 255),
+                       "Slider": (0, 255, 100)}
