@@ -159,6 +159,17 @@ class Board:
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
     
+    def set_up(self, chances):
+        if sum(chances) != 0:
+            for a in range(self.Width):
+                for b in range(self.Height):
+                    n = random.randint(1, sum(chances))
+                    for c in range(len(chances)):
+                        if sum(chances[:c+1]) > n:
+                            if c != 0 :
+                                self.Cell[a][b].birth(config.Square, c)
+                            break
+    
     def draw(self, preview=False):
         """draws the current board onto the screen then updates the display"""
         if preview:
@@ -577,15 +588,10 @@ Screen = pygame.display.set_mode((1, 1))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
 SimBoard = Board(Sim)
-for _ in range(int(SimBoard.Width * SimBoard.Height / 10)):
-    SimBoard.Cell[random.randint(SimBoard.Cushion, SimBoard.Cushion + SimBoard.Width - 1)][
-        random.randint(SimBoard.Cushion, SimBoard.Cushion + SimBoard.Height - 1)].birth(config.Square, 0)
+SimBoard.set_up(Sim.SetUpChances)
 Game = config.Game()
 GameBoard = Board(Game)
-for _ in range(int(GameBoard.Width * GameBoard.Height / 10)):
-    p = random.randint(1, Game.NoOfPlayers)
-    GameBoard.Cell[random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Width - 1)][
-        random.randint(GameBoard.Cushion, GameBoard.Cushion + GameBoard.Height - 1)].birth(config.Square, p)
+GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
 
 while True:

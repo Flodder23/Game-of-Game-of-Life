@@ -19,16 +19,17 @@ class Menu:
 
 
 class Sim:
-    """Change these values to change how the game looks in Simulator mode."""
+    """Change these values to change how the game looks and behaves in Simulator mode."""
     
     def __init__(self):
         self.Width = 50  # C 50 How many squares wide the board is
         self.Height = 30  # C 30 Ditto but with height
         self.Size = 20  # C 20 The size of the sides of each square (in pixels)
         self.Edge = 2  # C Size / 15 The gap between each cell
-        self.Wrap = False  # Whether the board wraps around on itself
-        self.Cushion = 10  # C 10 How far the board extends beyond the visible amount
+        self.Wrap = True  # Whether the board wraps around on itself
+        self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
+        self.SetUpChances = (0, 0)  # The chances of a cell being dead or alive when game is first loaded
         
         self.NoOfButtons = 0
         self.ButtonSize = 50
@@ -59,7 +60,7 @@ class Sim:
 
 
 class Game:
-    """Change these values to change how the game looks in 2-Player mode."""
+    """Change these values to change how the game looks and behaves in 2-Player mode."""
     
     def __init__(self):
         self.Width = 25  # C 50 How many squares wide the board is
@@ -69,8 +70,9 @@ class Game:
         self.Wrap = True
         self.Cushion = 0
         self.NoOfPlayers = 2  # C How many players there are - 2 or 4
-        self.PlayerNames = ["Joe", "Adam"]  # C Player's names
+        self.PlayerNames = ["Joe", "Adam"][:self.NoOfPlayers]  # C Player's names
         self.PreviewSize = self.Size // 2
+        self.SetUpChances = (10, 1, 1, 1, 1)[:self.NoOfPlayers+1]
         self.Colour = {"Alive": (0, 0, 0),
                        "Player1": (0, 255, 100),
                        "Player2": (0, 100, 255),
