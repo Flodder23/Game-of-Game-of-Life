@@ -8,12 +8,14 @@ class Menu:
     """Change these values to change how the main menu looks."""
     
     def __init__(self):
-        self.ButtonSize = 45
+        self.ButtonHeight = 90
+        self.ButtonWidth = 450
         self.ButtonBorder = 4
-        self.GapSize = 40
-        self.TitleGap = 60
-        self.Width = 1000
-        self.Height = 650
+        self.ButtonGapSize = 40
+        self.SideGapSize = 250
+        self.TextSize = 30
+        self.TitleGapSize = 60
+        self.TitleTextSize = 60
         self.Buttons = ("Simulator", "2-Player Game", "Help", "Quit")
         self.Colour = {"Border": (255, 255, 255),
                        "Text": (255, 255, 255),
@@ -25,10 +27,10 @@ class Sim:
     """Change these values to change how the game looks and behaves in Simulator mode."""
     
     def __init__(self):
-        self.Width = 50  # C 50 How many squares wide the board is
-        self.Height = 30  # C 30 Ditto but with height
-        self.Size = 20  # C 20 The size of the sides of each square (in pixels)
-        self.Edge = 2  # C Size / 15 The gap between each cell
+        self.Width = 40  # C 50 How many squares wide the board is
+        self.Height = 25  # C 30 Ditto but with height
+        self.Size = 22  # C 20 The size of the sides of each square (in pixels)
+        self.CellGap = 3  # C Size / 15 The gap between each cell
         self.Wrap = True  # Whether the board wraps around on itself
         self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
@@ -43,7 +45,7 @@ class Sim:
         self.EndOfSlider = self.Height * self.Size - self.HighlightSize - self.NotchLength
         self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) / (self.NoOfNotches - 1)
         self.ButtonStart = self.Size * self.Width
-        self.SliderY = self.Size * self.Width + self.Edge / 2 + self.ButtonSize / 2
+        self.SliderY = self.Size * self.Width + self.CellGap / 2 + self.ButtonSize / 2
         
         self.GPS = 10  # C 10 How many Generations Per Seconds
         self.TopGPS = 100  # The GPS at the top of the slider.
@@ -69,7 +71,7 @@ class Game:
         self.Width = 25  # C 50 How many squares wide the board is
         self.Height = 15  # C 30 Ditto but with height
         self.Size = 35  # C 20 The size of the sides of each square (in pixels)
-        self.Edge = 2  # C 2 The gap between each cell
+        self.CellGap = 2  # C 2 The gap between each cell
         self.Wrap = True
         self.Cushion = 0
         self.NoOfPlayers = 2  # C How many players there are - 2 or 4
@@ -89,14 +91,14 @@ class Game:
 
 class Help:
     def __init__(self):
-        self.GapSize = 5
+        self.SectionGapSize = 5
         self.TextSize = 16
         self.TitleSize = int(self.TextSize * 1.5)
         self.IndentSize = 40
         self.SliderWidth = 10
-        self.SliderGap = 5
+        self.SliderGapSize = 5
         self.SliderLength = 100
-        self.Width = 1000 + self.SliderWidth + self.SliderGap
+        self.Width = 1000 + self.SliderWidth + self.SliderGapSize
         self.Height = 600  # gets changed in the program depending on space taken up by help
         self.ScrollAmount = 50
         self.Colour = {"Background": (120, 120, 120),
