@@ -165,8 +165,8 @@ class Board:
                 for b in range(self.Height):
                     n = random.randint(1, sum(chances))
                     for c in range(len(chances)):
-                        if sum(chances[:c+1]) > n:
-                            if c != 0 :
+                        if sum(chances[:c + 1]) > n:
+                            if c != 0:
                                 self.Cell[a][b].birth(config.Square, c)
                             break
     
@@ -490,57 +490,17 @@ def draw_help(screen, help_surface, state, slider_centre, slider_range):
     pygame.display.update()
 
 
-def display_help(state, screen):
+def display_help(state, screen, help_surfaces):
     pygame.display.set_caption("Game of Life - Help")
-    help_text = open("help.txt").read().split("++")
-    for section in range(len(help_text)):
-        help_text[section] = help_text[section].split("\n")
-    xtra_line = 0
-    for _ in range(2):
-        text = help_text
-        pygame.display.set_mode((state.Width, xtra_line * (state.GapSize + state.TextSize) + 2 * state.GapSize))
-        screen.fill(state.Colour["Background"])
-        xtra_line = 0
-        for line in text[0]:
-            if line.startswith("**"):
-                size = state.TitleSize
-                line = line[2:]
-            else:
-                size = state.TextSize
-            indent = 0
-            while line.startswith("--"):
-                indent += 1
-                line = line[2:]
-            xtra_line += write(screen, state.GapSize + indent * state.IndentSize,
-                               state.GapSize + xtra_line * (state.GapSize + state.TextSize), line, state.Colour["Text"],
-                               size,
-                               max_len=int((
-                                               state.Width - 2 * state.GapSize - 2 * state.SliderGap - state.SliderWidth) / 2 - indent * state.IndentSize))
-    
-    xtra_line = 0
-    for _ in range(2):
-        help_surface = pygame.Surface((int((state.Width - state.SliderWidth) / 2) - state.GapSize - state.SliderGap,
-                                       xtra_line * (state.TextSize + state.GapSize)))
-        xtra_line = 0
-        help_surface.fill(state.Colour["Background"])
-        for line in text[1]:
-            if line.startswith("**"):
-                size = state.TitleSize
-                line = line[2:]
-            else:
-                size = state.TextSize
-            indent = 0
-            while line.startswith("--"):
-                indent += 1
-                line = line[2:]
-            xtra_line += write(help_surface, indent * state.IndentSize, xtra_line * (state.GapSize + state.TextSize),
-                               line,
-                               state.Colour["Text"],
-                               size, max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.GapSize)
+    pygame.display.set_mode((state.Width, help_surfaces[0].get_height()))
+    screen.fill(state.Colour["Background"])
     state.Height = screen.get_height()
     slider_range = (state.SliderGap + state.SliderLength / 2, state.Height - state.SliderGap - state.SliderLength / 2)
     slider_centre = slider_range[0]
-    draw_help(screen, help_surface, state, slider_centre, slider_range)
+    help_rect = help_surfaces[0].get_rect()
+    help_rect.topleft = (state.GapSize, state.GapSize)
+    screen.blit(help_surfaces[0], help_rect)
+    draw_help(screen, help_surfaces[1], state, slider_centre, slider_range)
     slider_last_turn = False
     while True:
         events = pygame.event.get()
@@ -556,8 +516,8 @@ def display_help(state, screen):
                     y = slider_range[0] + mouse_start - slider_centre
                 elif slider_centre + y - mouse_start > slider_range[1]:
                     y = slider_range[1] + mouse_start - slider_centre
-                draw_help(screen, help_surface, state, slider_centre + y - mouse_start, slider_range)
-        if x > (state.Width - state.SliderWidth - state.GapSize) / 2 - state.SliderGap:
+                draw_help(screen, help_surfaces[1], state, slider_centre + y - mouse_start, slider_range)
+        elif x > (state.Width - state.SliderWidth - state.GapSize) / 2 - state.SliderGap:
             for e in events:
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     draw = False
@@ -570,13 +530,43 @@ def display_help(state, screen):
                         slider_centre = min(slider_centre, slider_range[1])
                         draw = True
                     if draw:
-                        draw_help(screen, help_surface, state, slider_centre, slider_range)
+                        draw_help(screen, help_surfaces[1], state, slider_centre, slider_range)
         
         else:
             if slider_last_turn:
                 slider_last_turn = False
                 slider_centre += y - mouse_start
         pygame.display.update()
+
+
+def get_help_surface(state):
+    text = open("help.txt").read().split("++")
+    for section in range(len(text)):
+        text[section] = text[section].split("\n")
+    help_surfaces = []
+    
+    for section in text:
+        xtra_line = 0
+        for _ in range(2):
+            help_surface = pygame.Surface((int((state.Width - state.SliderWidth) / 2) - state.GapSize - state.SliderGap,
+                                           xtra_line * (state.TextSize + state.GapSize)))
+            help_surface.fill(state.Colour["Background"])
+            xtra_line = 0
+            for line in section:
+                if line.startswith("**"):
+                    size = state.TitleSize
+                    line = line[2:]
+                else:
+                    size = state.TextSize
+                indent = 0
+                while line.startswith("--"):
+                    indent += 1
+                    line = line[2:]
+                xtra_line += write(help_surface, indent * state.IndentSize,
+                                   xtra_line * (state.GapSize + state.TextSize), line, state.Colour["Text"], size,
+                                   max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.GapSize)
+        help_surfaces.append(help_surface)
+    return help_surfaces
 
 
 pygame.init()
@@ -593,6 +583,7 @@ Game = config.Game()
 GameBoard = Board(Game)
 GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
+HelpSurfaces = get_help_surface(Help)
 
 while True:
     MenuChoice = get_menu_choice(config.Menu(), Screen)
@@ -648,4 +639,4 @@ while True:
             GameBoard.draw()
     
     else:
-        display_help(Help, Screen)
+        display_help(Help, Screen, HelpSurfaces)
