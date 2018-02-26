@@ -8,10 +8,13 @@ class Menu:
     """Change these values to change how the main menu looks."""
     
     def __init__(self):
-        self.ButtonSize = 50
+        self.ButtonSize = 45
         self.ButtonBorder = 4
+        self.GapSize = 40
+        self.TitleGap = 60
         self.Width = 1000
         self.Height = 650
+        self.Buttons = ("Simulator", "2-Player Game", "Help", "Quit")
         self.Colour = {"Border": (255, 255, 255),
                        "Text": (255, 255, 255),
                        "Hover": (0, 255, 100),

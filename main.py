@@ -422,31 +422,29 @@ def get_menu_choice(menu, screen):
     text_col = menu.Colour["Text"]
     hover_col = menu.Colour["Hover"]
     
-    buttons = [[screen.get_width() / 2, (screen.get_height() / 2) + size * ((3 * a) - 1.5),
-                ("Simulator", "2-Player Game", "Help")[a], text_col] for a in range(3)]
-    for a in range(3):
-        centre = buttons[a]
-        pygame.draw.rect(screen, border_col, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
+    buttons = [[screen.get_width() / 2, 2 * menu.TitleGap + size * (3 * a + 1),
+                menu.Buttons[a], text_col] for a in range(len(menu.Buttons))]
+    for a in range(len(menu.Buttons)):
+        pygame.draw.rect(screen, border_col, (buttons[a][0] - 5 * size, buttons[a][1] - size, size * 10, size * 2))
         pygame.draw.rect(screen, menu.Colour["Background"], (
-            (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
+            (buttons[a][0] - 5 * size + border, buttons[a][1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
     
-    write(screen, screen.get_width() / 2, size * 2, "Main Menu", text_col, size, alignment=("centre", "centre"))
+    write(screen, screen.get_width() / 2, menu.TitleGap, "Main Menu", text_col, size, alignment=("centre", "centre"))
     
     while True:
         if check_quit(pygame.event.get()):
             quit_game()
         x, y = pygame.mouse.get_pos()
-        for a in range(3):
+        for a in range(len(menu.Buttons)):
             buttons[a][3] = text_col
         if screen.get_width() / 2 - 5 * size < x < screen.get_width() / 2 + 5 * size:
-            for a in range(3):
-                if (screen.get_height() / 2) + size * ((3 * a) - 2.5) < y < (screen.get_height() / 2) + size * (
-                            (3 * a) - 0.5):
+            for a in range(len(menu.Buttons)):
+                if buttons[a][1] - size < y < buttons[a][1] + size:
                     if pygame.mouse.get_pressed()[0]:
                         return buttons[a][2]
                     buttons[a][3] = hover_col
-        for a in range(3):
-            write(screen, screen.get_width() / 2, (screen.get_height() / 2) + size * ((3 * a) - 1.5), buttons[a][2],
+        for a in range(len(menu.Buttons)):
+            write(screen, screen.get_width() / 2, buttons[a][1], buttons[a][2],
                   buttons[a][3], int(size / 1.5), alignment=("centre", "centre"))
         
         pygame.display.update()
@@ -584,8 +582,9 @@ GameBoard = Board(Game)
 GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
 HelpSurfaces = get_help_surface(Help)
+MenuChoice = "Help"
 
-while True:
+while MenuChoice in ("Simulator", "2-Player Game", "Help"):
     MenuChoice = get_menu_choice(config.Menu(), Screen)
     if MenuChoice == "Simulator":
         Screen = pygame.display.set_mode(
@@ -638,5 +637,5 @@ while True:
             GameBoard.update()
             GameBoard.draw()
     
-    else:
+    elif MenuChoice == "Help":
         display_help(Help, Screen, HelpSurfaces)
