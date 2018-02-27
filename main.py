@@ -414,17 +414,24 @@ def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Fon
 
 def get_menu_choice(menu, screen):
     pygame.display.set_caption("Game of Life - Main Menu")
-    pygame.display.set_mode((2 * menu.SideGapSize + menu.ButtonWidth, 2 * menu.TitleGapSize + len(menu.Buttons) * (menu.ButtonHeight + menu.ButtonGapSize)))
+    pygame.display.set_mode((2 * menu.SideGapSize + menu.ButtonWidth,
+                             2 * menu.TitleGapSize + len(menu.Buttons) * (menu.ButtonHeight + menu.ButtonGapSize)))
     screen.fill(menu.Colour["Background"])
     
-    buttons = [[screen.get_width() / 2, 2 * menu.TitleGapSize + a * (menu.ButtonHeight + menu.ButtonGapSize) + menu.TitleTextSize,
+    buttons = [[screen.get_width() / 2,
+                2 * menu.TitleGapSize + a * (menu.ButtonHeight + menu.ButtonGapSize) + menu.TitleTextSize,
                 menu.Buttons[a], menu.Colour["Text"]] for a in range(len(menu.Buttons))]
     for a in range(len(menu.Buttons)):
-        pygame.draw.rect(screen, menu.Colour["Border"], (buttons[a][0] - menu.ButtonWidth / 2, buttons[a][1] - menu.ButtonHeight / 2, menu.ButtonWidth, menu.ButtonHeight))
+        pygame.draw.rect(screen, menu.Colour["Border"], (
+        buttons[a][0] - menu.ButtonWidth / 2, buttons[a][1] - menu.ButtonHeight / 2, menu.ButtonWidth,
+        menu.ButtonHeight))
         pygame.draw.rect(screen, menu.Colour["Background"], (
-            (buttons[a][0] - menu.ButtonWidth / 2 + menu.ButtonBorder, buttons[a][1] - menu.ButtonHeight / 2 + menu.ButtonBorder, menu.ButtonWidth - menu.ButtonBorder * 2, menu.ButtonHeight - menu.ButtonBorder * 2)))
+            (buttons[a][0] - menu.ButtonWidth / 2 + menu.ButtonBorder,
+             buttons[a][1] - menu.ButtonHeight / 2 + menu.ButtonBorder, menu.ButtonWidth - menu.ButtonBorder * 2,
+             menu.ButtonHeight - menu.ButtonBorder * 2)))
     
-    write(screen, screen.get_width() / 2, menu.TitleGapSize, "Main Menu", menu.Colour["Text"], menu.TitleTextSize, alignment=("centre", "centre"))
+    write(screen, screen.get_width() / 2, menu.TitleGapSize, "Main Menu", menu.Colour["Text"], menu.TitleTextSize,
+          alignment=("centre", "centre"))
     
     while True:
         if check_quit(pygame.event.get()):
@@ -468,7 +475,8 @@ def get_square(x, y, board):
 
 def draw_help(screen, help_surface, state, slider_centre, slider_range):
     pygame.draw.rect(screen, state.Colour["Background"],
-                     (int((state.Width - state.SliderWidth - state.SectionGapSize) / 2) - state.SliderGapSize, 0, state.Width,
+                     (int((state.Width - state.SliderWidth - state.SectionGapSize) / 2) - state.SliderGapSize, 0,
+                      state.Width,
                       state.Height))
     pygame.draw.rect(screen, state.Colour["Slider"], (
         state.Width - state.SliderGapSize - state.SliderWidth,
@@ -488,7 +496,8 @@ def display_help(state, screen, help_surfaces):
     pygame.display.set_mode((state.Width, help_surfaces[0].get_height()))
     screen.fill(state.Colour["Background"])
     state.Height = screen.get_height()
-    slider_range = (state.SliderGapSize + state.SliderLength / 2, state.Height - state.SliderGapSize - state.SliderLength / 2)
+    slider_range = (
+    state.SliderGapSize + state.SliderLength / 2, state.Height - state.SliderGapSize - state.SliderLength / 2)
     slider_centre = slider_range[0]
     help_rect = help_surfaces[0].get_rect()
     help_rect.topleft = (state.SectionGapSize, state.SectionGapSize)
@@ -532,7 +541,7 @@ def display_help(state, screen, help_surfaces):
         pygame.display.update()
 
 
-def get_help_surface(state):
+def get_help_surfaces(state):
     text = open("help.txt").read().split("++")
     for section in range(len(text)):
         text[section] = text[section].split("\n")
@@ -540,15 +549,19 @@ def get_help_surface(state):
     
     for section in text:
         xtra_line = 0
+        bold = 0
         for _ in range(2):
-            help_surface = pygame.Surface((int((state.Width - state.SliderWidth) / 2) - state.SectionGapSize - state.SliderGapSize,
-                                           xtra_line * (state.TextSize + state.SectionGapSize)))
+            help_surface = pygame.Surface(
+                (int((state.Width - state.SliderWidth) / 2) - state.SectionGapSize - state.SliderGapSize,
+                 xtra_line * (state.TextSize + state.SectionGapSize) + bold * (state.TitleSize - state.TextSize)))
             help_surface.fill(state.Colour["Background"])
             xtra_line = 0
+            bold = 0
             for line in section:
                 if line.startswith("**"):
                     size = state.TitleSize
                     line = line[2:]
+                    bold += 1
                 else:
                     size = state.TextSize
                 indent = 0
@@ -556,8 +569,10 @@ def get_help_surface(state):
                     indent += 1
                     line = line[2:]
                 xtra_line += write(help_surface, indent * state.IndentSize,
-                                   xtra_line * (state.SectionGapSize + state.TextSize), line, state.Colour["Text"], size,
-                                   max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.SectionGapSize)
+                                   xtra_line * (state.SectionGapSize + state.TextSize), line, state.Colour["Text"],
+                                   size,
+                                   max_len=help_surface.get_width() - indent * state.IndentSize,
+                                   gap=state.SectionGapSize)
         help_surfaces.append(help_surface)
     return help_surfaces
 
@@ -576,11 +591,10 @@ Game = config.Game()
 GameBoard = Board(Game)
 GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
-HelpSurfaces = get_help_surface(Help)
-MenuChoice = "Help"
+HelpSurfaces = get_help_surfaces(Help)
+MenuChoice = get_menu_choice(config.Menu(), Screen)
 
 while MenuChoice in ("Simulator", "2-Player Game", "Help"):
-    MenuChoice = get_menu_choice(config.Menu(), Screen)
     if MenuChoice == "Simulator":
         Screen = pygame.display.set_mode(
             (SimBoard.Size * SimBoard.Width + Sim.ButtonSize, SimBoard.Size * SimBoard.Height))
@@ -634,3 +648,5 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
     
     elif MenuChoice == "Help":
         display_help(Help, Screen, HelpSurfaces)
+    MenuChoice = get_menu_choice(config.Menu(), Screen)
+quit_game()
