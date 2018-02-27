@@ -34,7 +34,7 @@ class Sim:
         self.Wrap = True  # Whether the board wraps around on itself
         self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
-        self.SetUpChances = (0, 0)  # The chances of a cell being dead or alive when game is first loaded
+        self.SetUpChances = (10, 1)  # The chances of a cell being dead or alive when game is first loaded
         
         self.NoOfButtons = 0
         self.ButtonSize = 50

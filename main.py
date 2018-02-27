@@ -145,7 +145,7 @@ class Hex(Cell):
 
 
 class Board:
-    def __init__(self, state):
+    def __init__(self, state, players=False):
         self.Width = state.Width
         self.Height = state.Height
         self.Size = state.Size
@@ -155,6 +155,7 @@ class Board:
         self.Cushion = state.Cushion
         self.Colour = state.Colour
         self.PreviewSize = state.PreviewSize
+        self.Players = players
         self.Cell = [[Square(a, b, config.Square, config.Dead, self, 0) for b in range(
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
@@ -167,6 +168,8 @@ class Board:
                     for c in range(len(chances)):
                         if sum(chances[:c + 1]) > n:
                             if c != 0:
+                                if not self.Players:
+                                    c = 0
                                 self.Cell[a][b].birth(config.Square, c)
                             break
     
@@ -585,10 +588,10 @@ for event in allowed_events:
 Screen = pygame.display.set_mode((1, 1))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
-SimBoard = Board(Sim)
+SimBoard = Board(Sim, players = False)
 SimBoard.set_up(Sim.SetUpChances)
 Game = config.Game()
-GameBoard = Board(Game)
+GameBoard = Board(Game, players = True)
 GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
 HelpSurfaces = get_help_surfaces(Help)
