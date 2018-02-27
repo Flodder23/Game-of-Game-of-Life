@@ -1,7 +1,7 @@
 Dead = 0
 Square = 1
 Hex = 2
-Font = "berlinsansfb"
+Font = "boring"
 
 
 class Menu:
