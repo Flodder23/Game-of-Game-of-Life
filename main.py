@@ -1,4 +1,4 @@
-# ---  a,b refers to cell (a,b) whereas x,y refers to pixel coordinates --- #
+# a,b refers to cell (a,b) whereas x,y refers to pixel coordinates
 
 import pygame
 import math as maths
@@ -11,7 +11,7 @@ import copy
 
 class Cell:
     def __init__(self, a, b, current_state, next_state, board, player):
-        """a,b are the coordinates of the cell the instance represents."""
+        """a,b are the coordinates of the cell the instance represents with respect to the board."""
         self.CurrentState = current_state
         self.NextState = next_state
         self.CurrentPlayer = 0
@@ -118,32 +118,6 @@ class Square(Cell):
         pygame.draw.rect(Screen, colour, (x - size / 2, y - size / 2, size, size))
 
 
-class Hex(Cell):
-    def draw_shape(self, colour=None):
-        """Draws a type of cell (Type) at the desired cell (a,b)"""
-        if colour is None:
-            colour = self.Colour
-        x, y = self.Coordinates
-        s = Board.Size - Board.CellGap
-        pygame.draw.rect(Screen, Sim.Colour["Dead"], (x, y, s, s))
-        if self.CurrentState == config.Hex:
-            t = maths.sqrt(2)
-            s /= (1 + t)
-            a = x  # a-h are points along the edge of the square
-            b = maths.floor(x + (s * t / 2))
-            c = maths.floor(x + s + (s * t / 2))
-            d = maths.floor(x + s * (1 + t))
-            e = y
-            f = maths.floor(y + (s * t / 2))
-            g = maths.floor(y + s + (s * t / 2))
-            h = maths.floor(y + s * (1 + t))
-            
-            pygame.draw.polygon(Screen, colour, ((b, e), (c, e),
-                                                 (d, f), (d, g),
-                                                 (c, h), (b, h),
-                                                 (a, g), (a, f)))
-
-
 class Board:
     def __init__(self, state, players=False):
         self.Width = state.Width
@@ -229,7 +203,7 @@ class Board:
         self.draw()
     
     def reset(self, state):
-        self.__init__(state)
+        self.__init__(state, players=self.Players)
         self.update()
         self.draw()
     
@@ -299,9 +273,10 @@ def check_user_input(sim, board):
         if pygame.key.get_pressed()[pygame.K_f]:
             sim.GPSIsLimited = not sim.GPSIsLimited
             bottom_gps_log = maths.log(sim.BottomGPS, sim.TopGPS)
-            draw_gps_slider(Sim.EndOfSlider - ((maths.log(sim.GPS, sim.TopGPS) - bottom_gps_log) *
-                                               (Sim.EndOfSlider - Sim.StartOfSlider)) /
-                            (1 - bottom_gps_log), sim.GPSIsLimited, board)
+            draw_gps_slider(Sim.EndOfSlider -
+                            ((maths.log(sim.GPS, sim.TopGPS) - bottom_gps_log) *
+                             (Sim.EndOfSlider - Sim.StartOfSlider)) / (1 - bottom_gps_log),
+                            sim.GPSIsLimited, board)
             sim.CanChangeGPSLimit = False
     else:
         if not pygame.key.get_pressed()[pygame.K_f]:
@@ -318,8 +293,8 @@ def check_user_input(sim, board):
         board.reset(sim)
         sim.Paused = True
     if pygame.mouse.get_pressed()[0]:
-        if board.Size * board.Width + board.CellGap / 2 < x < board.Size * board.Width + Sim.ButtonSize + \
-                        board.CellGap / 2:  # within the button+GPS slider area
+        if board.Size * board.Width + board.CellGap / 2 < x < (
+                    board.Size * board.Width) + Sim.SliderSize + board.CellGap / 2:
             if y < Sim.StartOfSlider:
                 y = Sim.StartOfSlider
             elif y > Sim.EndOfSlider:
@@ -327,9 +302,8 @@ def check_user_input(sim, board):
                 sim.GPSIsLimited = True
             draw_gps_slider(y, sim.GPSIsLimited, board)
             bottom_gps_log = maths.log(sim.BottomGPS, sim.TopGPS)
-            sim.GPS = sim.TopGPS ** (((1 - bottom_gps_log) * (Sim.EndOfSlider - y) /
-                                      (
-                                          Sim.EndOfSlider - Sim.StartOfSlider)) + bottom_gps_log)
+            sim.GPS = sim.TopGPS ** (((1 - bottom_gps_log) * (Sim.EndOfSlider - y)
+                                      / (Sim.EndOfSlider - Sim.StartOfSlider)) + bottom_gps_log)
         elif 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
             board.Cell[a][b].birth(config.Square, 0)
             board.update()
@@ -351,40 +325,32 @@ def draw_gps_slider(y, gps_limit, board):
         y = Sim.EndOfSlider
     pygame.draw.rect(Screen, Sim.Colour["Background"],
                      ((Sim.ButtonStart, Sim.StartOfSlider - Sim.NotchLength),
-                      (Sim.ButtonStart + board.CellGap + Sim.HighlightSize +
-                       Sim.ButtonSize, Sim.EndOfSlider)))
-    pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY, Sim.StartOfSlider),
-                     (Sim.SliderY,
-                      Sim.EndOfSlider))
+                      (Sim.ButtonStart + board.CellGap + Sim.HighlightSize + Sim.SliderSize, Sim.EndOfSlider)))
+    pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY, Sim.StartOfSlider), (Sim.SliderY, Sim.EndOfSlider))
     for n in range(Sim.NoOfNotches):
         pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY - Sim.NotchLength / 2,
                                                       Sim.StartOfSlider + n * Sim.SpaceBetweenNotches),
-                         (Sim.SliderY + Sim.NotchLength / 2,
-                          Sim.StartOfSlider + n * Sim.SpaceBetweenNotches))
-    write(Screen, Sim.SliderY - (12 + Sim.NotchLength),
-          (Sim.StartOfSlider + Sim.EndOfSlider) * 0.5,
-          "Speed", Sim.Colour["Text"], 20,
-          rotate=90, alignment=("left", "centre"))
+                         (Sim.SliderY + Sim.NotchLength / 2, Sim.StartOfSlider + n * Sim.SpaceBetweenNotches))
+    write(Screen, Sim.SliderY - (12 + Sim.NotchLength), (Sim.StartOfSlider + Sim.EndOfSlider) * 0.5, "Speed",
+          Sim.Colour["Text"], 20, rotate=90, alignment=("left", "centre"))
     if gps_limit:
         colour = "Highlighter"
     else:
         colour = "Unselected"
     pygame.draw.polygon(Screen, Sim.Colour[colour], ((Sim.SliderY + Sim.NotchLength / 2, y),
-                                                     (Sim.SliderY + Sim.NotchLength,
-                                                      y - Sim.NotchLength / 2),
-                                                     (Sim.SliderY + 2 * Sim.NotchLength,
-                                                      y - Sim.NotchLength / 2),
-                                                     (Sim.SliderY + 2 * Sim.NotchLength,
-                                                      y + Sim.NotchLength / 2),
-                                                     (Sim.SliderY + Sim.NotchLength,
-                                                      y + Sim.NotchLength / 2)))
+                                                     (Sim.SliderY + Sim.NotchLength, y - Sim.NotchLength / 2),
+                                                     (Sim.SliderY + 2 * Sim.NotchLength, y - Sim.NotchLength / 2),
+                                                     (Sim.SliderY + 2 * Sim.NotchLength, y + Sim.NotchLength / 2),
+                                                     (Sim.SliderY + Sim.NotchLength, y + Sim.NotchLength / 2)))
     pygame.display.update()
 
 
 def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Font, rotate=0, alignment=("left", "top")):
     """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
     \"centre\" or \"right\" and the second value can be \"top\", \"centre\" or \"bottom\".
-    note that these values relate to x and y respectively whatever the rotation, which is in degrees."""
+    note that these values relate to x and y respectively whatever the rotation, which is in degrees.
+    max_len allows you to wrap a line if it becomes too long; the text will be restricted to being that many pixels long,
+    and if it gets longer a new line will be started"""
     font_obj = pygame.font.SysFont(font, size)
     if text == "":
         line = 1
@@ -396,8 +362,7 @@ def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Fon
         used = len(text.split())
         while max_len is not None and msg_surface_obj.get_width() > max_len:
             used -= 1
-            msg_surface_obj = pygame.transform.rotate(font_obj.render(" ".join(text.split()[:used]), False, colour),
-                                                      rotate)
+            msg_surface_obj = pygame.transform.rotate(font_obj.render(" ".join(text.split()[:used]), False, colour), rotate)
         msg_rect_obj = msg_surface_obj.get_rect()
         a, b = msg_surface_obj.get_size()
         if alignment[0] == "centre":
@@ -425,13 +390,13 @@ def get_menu_choice(menu, screen):
                 2 * menu.TitleGapSize + a * (menu.ButtonHeight + menu.ButtonGapSize) + menu.TitleTextSize,
                 menu.Buttons[a], menu.Colour["Text"]] for a in range(len(menu.Buttons))]
     for a in range(len(menu.Buttons)):
-        pygame.draw.rect(screen, menu.Colour["Border"], (
-        buttons[a][0] - menu.ButtonWidth / 2, buttons[a][1] - menu.ButtonHeight / 2, menu.ButtonWidth,
-        menu.ButtonHeight))
-        pygame.draw.rect(screen, menu.Colour["Background"], (
-            (buttons[a][0] - menu.ButtonWidth / 2 + menu.ButtonBorder,
-             buttons[a][1] - menu.ButtonHeight / 2 + menu.ButtonBorder, menu.ButtonWidth - menu.ButtonBorder * 2,
-             menu.ButtonHeight - menu.ButtonBorder * 2)))
+        pygame.draw.rect(screen, menu.Colour["Border"],
+                         (buttons[a][0] - menu.ButtonWidth / 2, buttons[a][1] - menu.ButtonHeight / 2, menu.ButtonWidth,
+                          menu.ButtonHeight))
+        pygame.draw.rect(screen, menu.Colour["Background"], ((buttons[a][0] - menu.ButtonWidth / 2 + menu.ButtonBorder,
+                                                              buttons[a][1] - menu.ButtonHeight / 2 + menu.ButtonBorder,
+                                                              menu.ButtonWidth - menu.ButtonBorder * 2,
+                                                              menu.ButtonHeight - menu.ButtonBorder * 2)))
     
     write(screen, screen.get_width() / 2, menu.TitleGapSize, "Main Menu", menu.Colour["Text"], menu.TitleTextSize,
           alignment=("centre", "centre"))
@@ -449,9 +414,8 @@ def get_menu_choice(menu, screen):
                         return buttons[a][2]
                     buttons[a][3] = menu.Colour["Hover"]
         for a in range(len(menu.Buttons)):
-            write(screen, screen.get_width() / 2, buttons[a][1], buttons[a][2],
-                  buttons[a][3], menu.TextSize, alignment=("centre", "centre"))
-        
+            write(screen, screen.get_width() / 2, buttons[a][1], buttons[a][2], buttons[a][3], menu.TextSize,
+                  alignment=("centre", "centre"))
         pygame.display.update()
 
 
@@ -479,16 +443,14 @@ def get_square(x, y, board):
 def draw_help(screen, help_surface, state, slider_centre, slider_range):
     pygame.draw.rect(screen, state.Colour["Background"],
                      (int((state.Width - state.SliderWidth - state.SectionGapSize) / 2) - state.SliderGapSize, 0,
-                      state.Width,
-                      state.Height))
-    pygame.draw.rect(screen, state.Colour["Slider"], (
-        state.Width - state.SliderGapSize - state.SliderWidth,
-        slider_centre - state.SliderLength / 2,
-        state.SliderWidth, state.SliderLength))
+                      state.Width, state.Height))
+    pygame.draw.rect(screen, state.Colour["Slider"],
+                     (state.Width - state.SliderGapSize - state.SliderWidth, slider_centre - state.SliderLength / 2,
+                      state.SliderWidth, state.SliderLength))
     help_rect = help_surface.get_rect()
     text_range = (state.SectionGapSize, help_surface.get_height() - state.Height + 2 * state.SectionGapSize)
-    top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) / (
-        slider_range[1] - slider_range[0])
+    top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) / (slider_range[1]
+                                                                                                   - slider_range[0])
     help_rect.topleft = (int((state.Width - state.SliderWidth) / 2) + state.SliderGapSize, top_y)
     screen.blit(help_surface, help_rect)
     pygame.display.update()
@@ -500,7 +462,7 @@ def display_help(state, screen, help_surfaces):
     screen.fill(state.Colour["Background"])
     state.Height = screen.get_height()
     slider_range = (
-    state.SliderGapSize + state.SliderLength / 2, state.Height - state.SliderGapSize - state.SliderLength / 2)
+        state.SliderGapSize + state.SliderLength / 2, state.Height - state.SliderGapSize - state.SliderLength / 2)
     slider_centre = slider_range[0]
     help_rect = help_surfaces[0].get_rect()
     help_rect.topleft = (state.SectionGapSize, state.SectionGapSize)
@@ -513,7 +475,8 @@ def display_help(state, screen, help_surfaces):
             break
         x, y = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
-            if not slider_last_turn and state.Width - 2 * state.SliderGapSize - state.SliderWidth < x < state.Width and slider_centre - state.SliderLength / 2 < y < slider_centre + state.SliderLength / 2:
+            if not slider_last_turn and state.Width - 2 * state.SliderGapSize - state.SliderWidth < x < state.Width \
+                    and slider_centre - state.SliderLength / 2 < y < slider_centre + state.SliderLength / 2:
                 slider_last_turn = True
                 mouse_start = y
             if slider_last_turn:
@@ -572,10 +535,8 @@ def get_help_surfaces(state):
                     indent += 1
                     line = line[2:]
                 xtra_line += write(help_surface, indent * state.IndentSize,
-                                   xtra_line * (state.SectionGapSize + state.TextSize), line, state.Colour["Text"],
-                                   size,
-                                   max_len=help_surface.get_width() - indent * state.IndentSize,
-                                   gap=state.SectionGapSize)
+                                   xtra_line * (state.SectionGapSize + state.TextSize), line, state.Colour["Text"], size,
+                                   max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.SectionGapSize)
         help_surfaces.append(help_surface)
     return help_surfaces
 
@@ -588,10 +549,10 @@ for event in allowed_events:
 Screen = pygame.display.set_mode((1, 1))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
-SimBoard = Board(Sim, players = False)
+SimBoard = Board(Sim)
 SimBoard.set_up(Sim.SetUpChances)
 Game = config.Game()
-GameBoard = Board(Game, players = True)
+GameBoard = Board(Game, players=True)
 GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
 HelpSurfaces = get_help_surfaces(Help)
@@ -599,8 +560,8 @@ MenuChoice = get_menu_choice(config.Menu(), Screen)
 
 while MenuChoice in ("Simulator", "2-Player Game", "Help"):
     if MenuChoice == "Simulator":
-        Screen = pygame.display.set_mode(
-            (SimBoard.Size * SimBoard.Width + Sim.ButtonSize, SimBoard.Size * SimBoard.Height))
+        Screen = pygame.display.set_mode((SimBoard.Size * SimBoard.Width + Sim.SliderSize,
+                                          SimBoard.Size * SimBoard.Height))
         Screen.fill(Sim.Colour["Background"])
         draw_gps_slider(((maths.log(Sim.GPS, 10) + 1) / -3) * (Sim.EndOfSlider - Sim.StartOfSlider) + Sim.EndOfSlider,
                         Sim.GPSIsLimited, SimBoard)
@@ -614,8 +575,8 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
             if GoBack:
                 break
             SimBoard.update()
-            if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) or (
-                        Sim.Paused and Sim.OneTurn):
+            if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) \
+                    or (Sim.Paused and Sim.OneTurn):
                 if Sim.OneTurn:
                     Sim.OneTurn = False
                 SimBoard.take_turn()

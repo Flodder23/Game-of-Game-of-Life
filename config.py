@@ -36,16 +36,16 @@ class Sim:
         self.PreviewSize = 0
         self.SetUpChances = (10, 1)  # The chances of a cell being dead or alive when game is first loaded
         
-        self.NoOfButtons = 0
-        self.ButtonSize = 50
+        ##self.NoOfButtons = 0
+        self.SliderSize = 50
         self.HighlightSize = 5
         self.NoOfNotches = 9
-        self.NotchLength = self.ButtonSize / 5
+        self.NotchLength = self.SliderSize / 5
         self.StartOfSlider = 2 * self.NotchLength
         self.EndOfSlider = self.Height * self.Size - self.HighlightSize - self.NotchLength
         self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) / (self.NoOfNotches - 1)
         self.ButtonStart = self.Size * self.Width
-        self.SliderY = self.Size * self.Width + self.CellGap / 2 + self.ButtonSize / 2
+        self.SliderY = self.Size * self.Width + self.CellGap / 2 + self.SliderSize / 2
         
         self.GPS = 10  # C 10 How many Generations Per Seconds
         self.TopGPS = 100  # The GPS at the top of the slider.
