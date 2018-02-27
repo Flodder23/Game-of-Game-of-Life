@@ -17,8 +17,8 @@ class Cell:
         self.CurrentPlayer = 0
         self.NextPlayer = player
         self.BoardPos = (a, b)
-        self.Coordinates = ((self.BoardPos[0] - board.Cushion) * board.Size + board.Edge / 2,
-                            (self.BoardPos[1] - board.Cushion) * board.Size + board.Edge / 2)
+        self.Coordinates = ((self.BoardPos[0] - board.Cushion) * board.Size + board.CellGap / 2,
+                            (self.BoardPos[1] - board.Cushion) * board.Size + board.CellGap / 2)
     
     def kill(self):
         self.NextState = config.Dead
@@ -124,7 +124,7 @@ class Hex(Cell):
         if colour is None:
             colour = self.Colour
         x, y = self.Coordinates
-        s = Board.Size - Board.Edge
+        s = Board.Size - Board.CellGap
         pygame.draw.rect(Screen, Sim.Colour["Dead"], (x, y, s, s))
         if self.CurrentState == config.Hex:
             t = maths.sqrt(2)
@@ -145,39 +145,40 @@ class Hex(Cell):
 
 
 class Board:
-    def __init__(self, state):
+    def __init__(self, state, players=False):
         self.Width = state.Width
         self.Height = state.Height
         self.Size = state.Size
         self.Wrap = state.Wrap
-        self.Edge = state.Edge
+        self.CellGap = state.CellGap
         self.Generations = 0
         self.Cushion = state.Cushion
         self.Colour = state.Colour
         self.PreviewSize = state.PreviewSize
+        self.Players = players
         self.Cell = [[Square(a, b, config.Square, config.Dead, self, 0) for b in range(
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
     
-    def set_up(self, chance):
-        tot = [0, 0, 0]
-        for a in range(self.Width):
-            for b in range(self.Height):
-                n = random.randint(0, sum(chance))
-                for c in range(len(chance)):
-                    if sum(chance[:c+1]) >= n:
-                        if c != 0:
-                            self.Cell[a][b].birth(config.Square, c)
-                            tot[c] += 1
-                        tot[0] += 1
-                        break
+    def set_up(self, chances):
+        if sum(chances) != 0:
+            for a in range(self.Width):
+                for b in range(self.Height):
+                    n = random.randint(1, sum(chances))
+                    for c in range(len(chances)):
+                        if sum(chances[:c + 1]) > n:
+                            if c != 0:
+                                if not self.Players:
+                                    c = 0
+                                self.Cell[a][b].birth(config.Square, c)
+                            break
     
     def draw(self, preview=False):
         """draws the current board onto the screen then updates the display"""
         if preview:
             size = self.PreviewSize
         else:
-            size = self.Size - self.Edge
+            size = self.Size - self.CellGap
         for a in range(self.Cushion, self.Cushion + self.Width):
             for b in range(self.Cushion, self.Cushion + self.Height):
                 self.Cell[a][b].draw(size, self)
@@ -317,8 +318,8 @@ def check_user_input(sim, board):
         board.reset(sim)
         sim.Paused = True
     if pygame.mouse.get_pressed()[0]:
-        if board.Size * board.Width + board.Edge / 2 < x < board.Size * board.Width + Sim.ButtonSize + \
-                        board.Edge / 2:  # within the button+GPS slider area
+        if board.Size * board.Width + board.CellGap / 2 < x < board.Size * board.Width + Sim.ButtonSize + \
+                        board.CellGap / 2:  # within the button+GPS slider area
             if y < Sim.StartOfSlider:
                 y = Sim.StartOfSlider
             elif y > Sim.EndOfSlider:
@@ -350,7 +351,7 @@ def draw_gps_slider(y, gps_limit, board):
         y = Sim.EndOfSlider
     pygame.draw.rect(Screen, Sim.Colour["Background"],
                      ((Sim.ButtonStart, Sim.StartOfSlider - Sim.NotchLength),
-                      (Sim.ButtonStart + board.Edge + Sim.HighlightSize +
+                      (Sim.ButtonStart + board.CellGap + Sim.HighlightSize +
                        Sim.ButtonSize, Sim.EndOfSlider)))
     pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY, Sim.StartOfSlider),
                      (Sim.SliderY,
@@ -415,41 +416,41 @@ def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Fon
 
 
 def get_menu_choice(menu, screen):
-    pygame.display.set_mode((menu.Width, menu.Height))
     pygame.display.set_caption("Game of Life - Main Menu")
+    pygame.display.set_mode((2 * menu.SideGapSize + menu.ButtonWidth,
+                             2 * menu.TitleGapSize + len(menu.Buttons) * (menu.ButtonHeight + menu.ButtonGapSize)))
     screen.fill(menu.Colour["Background"])
-    size = menu.ButtonSize
-    border = menu.ButtonBorder
-    border_col = menu.Colour["Border"]
-    text_col = menu.Colour["Text"]
-    hover_col = menu.Colour["Hover"]
     
-    buttons = [[screen.get_width() / 2, (screen.get_height() / 2) + size * ((3 * a) - 1.5),
-                ("Simulator", "2-Player Game", "Help")[a], text_col] for a in range(3)]
-    for a in range(3):
-        centre = buttons[a]
-        pygame.draw.rect(screen, border_col, (centre[0] - 5 * size, centre[1] - size, size * 10, size * 2))
+    buttons = [[screen.get_width() / 2,
+                2 * menu.TitleGapSize + a * (menu.ButtonHeight + menu.ButtonGapSize) + menu.TitleTextSize,
+                menu.Buttons[a], menu.Colour["Text"]] for a in range(len(menu.Buttons))]
+    for a in range(len(menu.Buttons)):
+        pygame.draw.rect(screen, menu.Colour["Border"], (
+        buttons[a][0] - menu.ButtonWidth / 2, buttons[a][1] - menu.ButtonHeight / 2, menu.ButtonWidth,
+        menu.ButtonHeight))
         pygame.draw.rect(screen, menu.Colour["Background"], (
-            (centre[0] - 5 * size + border, centre[1] - size + border, size * 10 - border * 2, size * 2 - border * 2)))
+            (buttons[a][0] - menu.ButtonWidth / 2 + menu.ButtonBorder,
+             buttons[a][1] - menu.ButtonHeight / 2 + menu.ButtonBorder, menu.ButtonWidth - menu.ButtonBorder * 2,
+             menu.ButtonHeight - menu.ButtonBorder * 2)))
     
-    write(screen, screen.get_width() / 2, size * 2, "Main Menu", text_col, size, alignment=("centre", "centre"))
+    write(screen, screen.get_width() / 2, menu.TitleGapSize, "Main Menu", menu.Colour["Text"], menu.TitleTextSize,
+          alignment=("centre", "centre"))
     
     while True:
         if check_quit(pygame.event.get()):
             quit_game()
         x, y = pygame.mouse.get_pos()
-        for a in range(3):
-            buttons[a][3] = text_col
-        if screen.get_width() / 2 - 5 * size < x < screen.get_width() / 2 + 5 * size:
-            for a in range(3):
-                if (screen.get_height() / 2) + size * ((3 * a) - 2.5) < y < (screen.get_height() / 2) + size * (
-                            (3 * a) - 0.5):
+        for a in range(len(menu.Buttons)):
+            buttons[a][3] = menu.Colour["Text"]
+        if screen.get_width() / 2 - menu.ButtonWidth / 2 < x < screen.get_width() / 2 + menu.ButtonWidth / 2:
+            for a in range(len(menu.Buttons)):
+                if buttons[a][1] - menu.ButtonHeight / 2 < y < buttons[a][1] + menu.ButtonHeight / 2:
                     if pygame.mouse.get_pressed()[0]:
                         return buttons[a][2]
-                    buttons[a][3] = hover_col
-        for a in range(3):
-            write(screen, screen.get_width() / 2, (screen.get_height() / 2) + size * ((3 * a) - 1.5), buttons[a][2],
-                  buttons[a][3], int(size / 1.5), alignment=("centre", "centre"))
+                    buttons[a][3] = menu.Colour["Hover"]
+        for a in range(len(menu.Buttons)):
+            write(screen, screen.get_width() / 2, buttons[a][1], buttons[a][2],
+                  buttons[a][3], menu.TextSize, alignment=("centre", "centre"))
         
         pygame.display.update()
 
@@ -477,71 +478,34 @@ def get_square(x, y, board):
 
 def draw_help(screen, help_surface, state, slider_centre, slider_range):
     pygame.draw.rect(screen, state.Colour["Background"],
-                     (int((state.Width - state.SliderWidth - state.GapSize) / 2) - state.SliderGap, 0, state.Width,
+                     (int((state.Width - state.SliderWidth - state.SectionGapSize) / 2) - state.SliderGapSize, 0,
+                      state.Width,
                       state.Height))
     pygame.draw.rect(screen, state.Colour["Slider"], (
-        state.Width - state.SliderGap - state.SliderWidth,
+        state.Width - state.SliderGapSize - state.SliderWidth,
         slider_centre - state.SliderLength / 2,
         state.SliderWidth, state.SliderLength))
     help_rect = help_surface.get_rect()
-    text_range = (state.GapSize, help_surface.get_height() - state.Height + 2 * state.GapSize)
+    text_range = (state.SectionGapSize, help_surface.get_height() - state.Height + 2 * state.SectionGapSize)
     top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) / (
         slider_range[1] - slider_range[0])
-    help_rect.topleft = (int((state.Width - state.SliderWidth) / 2) + state.SliderGap, top_y)
+    help_rect.topleft = (int((state.Width - state.SliderWidth) / 2) + state.SliderGapSize, top_y)
     screen.blit(help_surface, help_rect)
     pygame.display.update()
 
 
-def display_help(state, screen):
+def display_help(state, screen, help_surfaces):
     pygame.display.set_caption("Game of Life - Help")
-    help_text = open("help.txt").read().split("++")
-    for section in range(len(help_text)):
-        help_text[section] = help_text[section].split("\n")
-    xtra_line = 20  # Placeholder value so the screen doesn't disappear completely
-    for _ in range(2):
-        text = help_text
-        pygame.display.set_mode((state.Width, xtra_line * (state.GapSize + state.TextSize) + 2 * state.GapSize))
-        screen.fill(state.Colour["Background"])
-        pygame.display.update()
-        xtra_line = 0
-        for line in text[0]:
-            if line.startswith("**"):
-                size = state.TitleSize
-                line = line[2:]
-            else:
-                size = state.TextSize
-            indent = 0
-            while line.startswith("--"):
-                indent += 1
-                line = line[2:]
-            xtra_line += write(screen, state.GapSize + indent * state.IndentSize,
-                               state.GapSize + xtra_line * (state.GapSize + state.TextSize), line, state.Colour["Text"],
-                               size,
-                               max_len=int((
-                                               state.Width - 2 * state.GapSize - 2 * state.SliderGap - state.SliderWidth) / 2 - indent * state.IndentSize))
-    for _ in range(2):
-        help_surface = pygame.Surface((int((state.Width - state.SliderWidth) / 2) - state.GapSize - state.SliderGap,
-                                       xtra_line * (state.TextSize + state.GapSize)))
-        xtra_line = 0
-        help_surface.fill(state.Colour["Background"])
-        for line in text[1]:
-            if line.startswith("**"):
-                size = state.TitleSize
-                line = line[2:]
-            else:
-                size = state.TextSize
-            indent = 0
-            while line.startswith("--"):
-                indent += 1
-                line = line[2:]
-            xtra_line += write(help_surface, indent * state.IndentSize, xtra_line * (state.GapSize + state.TextSize),
-                               line,
-                               state.Colour["Text"],
-                               size, max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.GapSize)
+    pygame.display.set_mode((state.Width, help_surfaces[0].get_height()))
+    screen.fill(state.Colour["Background"])
     state.Height = screen.get_height()
-    slider_range = (state.SliderGap + state.SliderLength / 2, state.Height - state.SliderGap - state.SliderLength / 2)
+    slider_range = (
+    state.SliderGapSize + state.SliderLength / 2, state.Height - state.SliderGapSize - state.SliderLength / 2)
     slider_centre = slider_range[0]
-    draw_help(screen, help_surface, state, slider_centre, slider_range)
+    help_rect = help_surfaces[0].get_rect()
+    help_rect.topleft = (state.SectionGapSize, state.SectionGapSize)
+    screen.blit(help_surfaces[0], help_rect)
+    draw_help(screen, help_surfaces[1], state, slider_centre, slider_range)
     slider_last_turn = False
     while True:
         events = pygame.event.get()
@@ -549,7 +513,7 @@ def display_help(state, screen):
             break
         x, y = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
-            if not slider_last_turn and state.Width - 2 * state.SliderGap - state.SliderWidth < x < state.Width and slider_centre - state.SliderLength / 2 < y < slider_centre + state.SliderLength / 2:
+            if not slider_last_turn and state.Width - 2 * state.SliderGapSize - state.SliderWidth < x < state.Width and slider_centre - state.SliderLength / 2 < y < slider_centre + state.SliderLength / 2:
                 slider_last_turn = True
                 mouse_start = y
             if slider_last_turn:
@@ -557,8 +521,8 @@ def display_help(state, screen):
                     y = slider_range[0] + mouse_start - slider_centre
                 elif slider_centre + y - mouse_start > slider_range[1]:
                     y = slider_range[1] + mouse_start - slider_centre
-                draw_help(screen, help_surface, state, slider_centre + y - mouse_start, slider_range)
-        if x > (state.Width - state.SliderWidth - state.GapSize) / 2 - state.SliderGap:
+                draw_help(screen, help_surfaces[1], state, slider_centre + y - mouse_start, slider_range)
+        elif x > (state.Width - state.SliderWidth - state.SectionGapSize) / 2 - state.SliderGapSize:
             for e in events:
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     draw = False
@@ -571,13 +535,49 @@ def display_help(state, screen):
                         slider_centre = min(slider_centre, slider_range[1])
                         draw = True
                     if draw:
-                        draw_help(screen, help_surface, state, slider_centre, slider_range)
+                        draw_help(screen, help_surfaces[1], state, slider_centre, slider_range)
         
         else:
             if slider_last_turn:
                 slider_last_turn = False
                 slider_centre += y - mouse_start
         pygame.display.update()
+
+
+def get_help_surfaces(state):
+    text = open("help.txt").read().split("++")
+    for section in range(len(text)):
+        text[section] = text[section].split("\n")
+    help_surfaces = []
+    
+    for section in text:
+        xtra_line = 0
+        bold = 0
+        for _ in range(2):
+            help_surface = pygame.Surface(
+                (int((state.Width - state.SliderWidth) / 2) - state.SectionGapSize - state.SliderGapSize,
+                 xtra_line * (state.TextSize + state.SectionGapSize) + bold * (state.TitleSize - state.TextSize)))
+            help_surface.fill(state.Colour["Background"])
+            xtra_line = 0
+            bold = 0
+            for line in section:
+                if line.startswith("**"):
+                    size = state.TitleSize
+                    line = line[2:]
+                    bold += 1
+                else:
+                    size = state.TextSize
+                indent = 0
+                while line.startswith("--"):
+                    indent += 1
+                    line = line[2:]
+                xtra_line += write(help_surface, indent * state.IndentSize,
+                                   xtra_line * (state.SectionGapSize + state.TextSize), line, state.Colour["Text"],
+                                   size,
+                                   max_len=help_surface.get_width() - indent * state.IndentSize,
+                                   gap=state.SectionGapSize)
+        help_surfaces.append(help_surface)
+    return help_surfaces
 
 
 pygame.init()
@@ -588,16 +588,16 @@ for event in allowed_events:
 Screen = pygame.display.set_mode((1, 1))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
-SimBoard = Board(Sim)
-SimBoard.set_up(Sim.SetUpBirthChances)
+SimBoard = Board(Sim, players = False)
+SimBoard.set_up(Sim.SetUpChances)
 Game = config.Game()
-GameBoard = Board(Game)
-GameBoard.set_up(Game.SetUpBirthChances)
-    
+GameBoard = Board(Game, players = True)
+GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
+HelpSurfaces = get_help_surfaces(Help)
+MenuChoice = get_menu_choice(config.Menu(), Screen)
 
-while True:
-    MenuChoice = get_menu_choice(config.Menu(), Screen)
+while MenuChoice in ("Simulator", "2-Player Game", "Help"):
     if MenuChoice == "Simulator":
         Screen = pygame.display.set_mode(
             (SimBoard.Size * SimBoard.Width + Sim.ButtonSize, SimBoard.Size * SimBoard.Height))
@@ -649,5 +649,7 @@ while True:
             GameBoard.update()
             GameBoard.draw()
     
-    else:
-        display_help(Help, Screen)
+    elif MenuChoice == "Help":
+        display_help(Help, Screen, HelpSurfaces)
+    MenuChoice = get_menu_choice(config.Menu(), Screen)
+quit_game()
