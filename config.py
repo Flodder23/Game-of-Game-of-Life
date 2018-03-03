@@ -30,7 +30,7 @@ class Sim:
         self.Width = 40  # C 50 How many squares wide the board is
         self.Height = 25  # C 30 Ditto but with height
         self.Size = 22  # C 20 The size of the sides of each square (in pixels)
-        self.CellGap = 3  # C Size / 15 The gap between each cell
+        self.CellGap = 2  # C Size / 15 The gap between each cell
         self.Wrap = True  # Whether the board wraps around on itself
         self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
@@ -75,24 +75,29 @@ class Game:
         self.Wrap = True
         self.Cushion = 0
         self.NoOfPlayers = 2  # C How many players there are - 2 or 4
-        self.PlayerNames = ["Joe", "Adam"][:self.NoOfPlayers]  # C Player's names
+        self.PlayerNames = ["Joe", "Adam O'Neal", "Max", "Matej"][:self.NoOfPlayers]  # C Player's names
         self.PreviewSize = self.Size // 2
         self.SetUpChances = (10, 1, 1, 1, 1)[:self.NoOfPlayers+1]
+        self.TextSize = 35
+        self.RightColumnSize = 150
+        self.ButtonHeight = 50
+        self.ButtonBorderSize = 3
         self.Colour = {"Alive": (0, 0, 0),
                        "Player1": (0, 255, 100),
                        "Player2": (0, 100, 255),
-                       "Player3": (100, 255, 0),
-                       "Player4": (100, 0, 255),
+                       "Player3": (255, 100, 0),
+                       "Player4": (0, 0, 0),
                        "Dead": (255, 255, 255),
                        "Highlighter": (0, 255, 100),
                        "Background": (120, 120, 120),
-                       "Text": (180, 180, 180), }
+                       "Text": (255, 255, 255),
+                       "ButtonBorder": (255, 255, 255)}
 
 
 class Help:
     def __init__(self):
         self.SectionGapSize = 5
-        self.TextSize = 16
+        self.TextSize = 20
         self.TitleSize = int(self.TextSize * 1.5)
         self.IndentSize = 40
         self.SliderWidth = 10

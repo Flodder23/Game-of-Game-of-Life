@@ -224,33 +224,84 @@ class Player:
     def __init__(self, number, colour):
         self.Number = number
         self.Colour = colour
+        self.NoOfCells = 0
+        self.SpareTurns = 0
     
-    def take_turn(self, board):
-        can_end_turn = False
+    def take_turn(self, board, state, screen):
+        turn_chosen = False
         board.draw()
         last_click = [0, 0, True]
         pygame.display.update()
-        held_down = False
+        mouse_held_down = False
+        showing_future = False
+        esc_held_down = False
+        space_held_down = True
+        has_let_go_of_mouse = False
+        button_text = "Skip Turn"
         while True:
-            if check_quit(pygame.event.get()):
-                return "Go Back"
+            events = pygame.event.get()
+            if check_quit(events):
+                if showing_future:
+                    board.draw()
+                    button_text = "Skip Turn"
+                    showing_future = False
+                    esc_held_down = True
+                elif not esc_held_down:
+                    return "Go Back"
+            else:
+                esc_held_down = False
+            if not pygame.mouse.get_pressed()[0]:
+                has_let_go_of_mouse = True
             x, y = pygame.mouse.get_pos()
             a, b = get_square(x, y, board)
-            if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
-                if pygame.mouse.get_pressed()[0] and not held_down:
-                    board.show_future(a, b, False, self.Number)
-                    can_end_turn = True
-                    last_click = [a, b, False]
-                    held_down = True
-                elif pygame.mouse.get_pressed()[2] and not held_down:
-                    board.show_future(a, b, True, self.Number)
-                    can_end_turn = True
+            if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion and not mouse_held_down:
+                kill = None
+                if pygame.mouse.get_pressed()[0]:
+                    kill = False
+                elif pygame.mouse.get_pressed()[2]:
+                    kill = True
+                if kill is not None:
+                    board.show_future(a, b, kill, self.Number)
+                    showing_future = True
+                    turn_chosen = True
                     last_click = [a, b, True]
-                    held_down = True
-            if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]) and held_down:
-                held_down = False
-            if can_end_turn and pygame.key.get_pressed()[pygame.K_SPACE]:
-                return last_click
+                    mouse_held_down = True
+                    button_text = "Take Turn"
+            on_button = False
+            if 2 * state.ButtonBorderSize < screen.get_width() - x < state.RightColumnSize - 2 * state.ButtonBorderSize:
+                if 0 < screen.get_height() - y - 2 * state.ButtonBorderSize < state.ButtonHeight:
+                    if pygame.mouse.get_pressed()[0] and has_let_go_of_mouse:
+                        if not turn_chosen:
+                            return "Skip"
+                        else:
+                            return last_click
+                    button_colour = state.Colour["Highlighter"]
+                    on_button = True
+            if not on_button:
+                button_colour = state.Colour["Text"]
+            pygame.draw.rect(screen, state.Colour["ButtonBorder"],
+                             (screen.get_width() - state.RightColumnSize + state.ButtonBorderSize,
+                              screen.get_height() - state.ButtonBorderSize - state.ButtonHeight,
+                              state.RightColumnSize - 2 * state.ButtonBorderSize, state.ButtonHeight))
+            pygame.draw.rect(screen, state.Colour["Background"],
+                             (screen.get_width() - state.RightColumnSize + 2 * state.ButtonBorderSize,
+                              screen.get_height() - state.ButtonHeight,
+                              state.RightColumnSize - 4 * state.ButtonBorderSize,
+                              state.ButtonHeight - 2 * state.ButtonBorderSize))
+            write(screen, screen.get_width() - state.RightColumnSize / 2,
+                  screen.get_height() - state.ButtonBorderSize - state.ButtonHeight / 2, button_text,
+                  button_colour, state.TextSize, max_len=state.RightColumnSize, alignment=("centre", "centre"))
+            if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]) and mouse_held_down:
+                mouse_held_down = False
+            if pygame.key.get_pressed()[pygame.K_SPACE]:
+                if has_let_go_of_mouse and not space_held_down:
+                    if not turn_chosen:
+                        return "Skip"
+                    else:
+                        return last_click
+            else:
+                space_held_down = False
+            pygame.display.update()
 
 
 def check_user_input(sim, board):
@@ -345,7 +396,7 @@ def draw_gps_slider(y, gps_limit, board):
     pygame.display.update()
 
 
-def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Font, rotate=0, alignment=("left", "top")):
+def write(screen, x, y, text, colour, size, max_len=None, gap=0, font=config.Font, rotate=0, alignment=("left", "top")):
     """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
     \"centre\" or \"right\" and the second value can be \"top\", \"centre\" or \"bottom\".
     note that these values relate to x and y respectively whatever the rotation, which is in degrees.
@@ -354,8 +405,10 @@ def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Fon
     font_obj = pygame.font.SysFont(font, size)
     if text == "":
         line = 1
+        extra_space = size
     else:
         line = 0
+        extra_space = 0
     while len(text.split()) > 0:
         line += 1
         msg_surface_obj = pygame.transform.rotate(font_obj.render(text, False, colour), rotate)
@@ -366,18 +419,23 @@ def write(screen, x, y, text, colour, size, max_len=None, gap=5, font=config.Fon
         msg_rect_obj = msg_surface_obj.get_rect()
         a, b = msg_surface_obj.get_size()
         if alignment[0] == "centre":
-            x -= a / 2
+            new_x = x - a / 2
         elif alignment[0] == "right":
-            x -= a
+            new_x = x - a
+        else:
+            new_x = x
         if alignment[1] == "centre":
-            y -= b / 2
+            new_y = y - b / 2
         elif alignment[1] == "bottom":
-            y -= b
-        msg_rect_obj.topleft = (x, y)
+            new_y = y - b
+        else:
+            new_y = y
+        msg_rect_obj.topleft = (new_x, new_y)
         screen.blit(msg_surface_obj, msg_rect_obj)
-        y += size + gap
+        y += msg_surface_obj.get_height() + gap
+        extra_space += msg_surface_obj.get_height() + gap
         text = " ".join(text.split()[used:])
-    return line
+    return extra_space
 
 
 def get_menu_choice(menu, screen):
@@ -514,29 +572,24 @@ def get_help_surfaces(state):
     help_surfaces = []
     
     for section in text:
-        xtra_line = 0
-        bold = 0
+        extra = 0
         for _ in range(2):
-            help_surface = pygame.Surface(
-                (int((state.Width - state.SliderWidth) / 2) - state.SectionGapSize - state.SliderGapSize,
-                 xtra_line * (state.TextSize + state.SectionGapSize) + bold * (state.TitleSize - state.TextSize)))
+            help_surface = pygame.Surface(((state.Width - state.SliderWidth)
+                                           // 2 - state.SectionGapSize - state.SliderGapSize, extra))
             help_surface.fill(state.Colour["Background"])
-            xtra_line = 0
-            bold = 0
+            extra = 0
             for line in section:
                 if line.startswith("**"):
                     size = state.TitleSize
                     line = line[2:]
-                    bold += 1
                 else:
                     size = state.TextSize
                 indent = 0
                 while line.startswith("--"):
                     indent += 1
                     line = line[2:]
-                xtra_line += write(help_surface, indent * state.IndentSize,
-                                   xtra_line * (state.SectionGapSize + state.TextSize), line, state.Colour["Text"], size,
-                                   max_len=help_surface.get_width() - indent * state.IndentSize, gap=state.SectionGapSize)
+                extra += write(help_surface, indent * state.IndentSize, extra, line, state.Colour["Text"], size,
+                               max_len=help_surface.get_width() - indent * state.IndentSize) + state.SectionGapSize
         help_surfaces.append(help_surface)
     return help_surfaces
 
@@ -546,7 +599,7 @@ pygame.event.set_allowed(None)
 allowed_events = (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT)
 for event in allowed_events:
     pygame.event.set_allowed(event)
-Screen = pygame.display.set_mode((1, 1))
+Screen = pygame.display.set_mode((500,500))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
 SimBoard = Board(Sim)
@@ -586,11 +639,11 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
                 LastFrame = time.time()
     
     elif MenuChoice == "2-Player Game":
-        PlayerNo = 2
+        PlayerNo = Game.NoOfPlayers
         GameBoard.update()
         GameBoard.update()
         GameBoard.draw()
-        Screen = pygame.display.set_mode((GameBoard.Size * GameBoard.Width, GameBoard.Size * GameBoard.Height))
+        Screen = pygame.display.set_mode((GameBoard.Size * GameBoard.Width + Game.RightColumnSize, GameBoard.Size * GameBoard.Height))
         Screen.fill(Game.Colour["Background"])
         Players = [Player(n, Game.Colour["Player" + str(n)]) for n in range(1, Game.NoOfPlayers + 1)]
         while True:
@@ -598,18 +651,38 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
                 PlayerNo = 1
             else:
                 PlayerNo += 1
-            Turn = Players[PlayerNo - 1].take_turn(GameBoard)
+            Screen.fill(Game.Colour["Background"])
+            write(Screen, Screen.get_width() - Game.RightColumnSize / 2, 10, Game.PlayerNames[PlayerNo-1] + "'s turn",
+                  Game.Colour["Player" + str(PlayerNo)], Game.TextSize, max_len=Game.RightColumnSize,
+                  alignment=("centre", "top"))
+            extra_space = 0
+            top = [Screen.get_width() - Game.RightColumnSize + Game.ButtonBorderSize,
+                   2 * Game.ButtonBorderSize + 3 * Game.TextSize]
+            for n in range(Game.NoOfPlayers):
+                col = Players[n].Colour
+                extra_space += write(Screen, top[0], top[1] + extra_space, Game.PlayerNames[n], col, int(Game.TextSize / 1.2),
+                                     max_len=Game.RightColumnSize - 2 * Game.ButtonBorderSize)
+                extra_space += write(Screen, top[0], top[1] + extra_space, "Score: " + str(Players[n].NoOfCells), col,
+                                     int(Game.TextSize / 1.5))
+                extra_space += write(Screen, top[0], top[1] + extra_space, "Spare Turns: " + str(Players[n].SpareTurns), col,
+                                     int(Game.TextSize / 1.5))
+             
+            Turn = Players[PlayerNo - 1].take_turn(GameBoard, Game, Screen)
             if Turn == "Go Back":
                 break
-            if Turn[2]:
-                GameBoard.Cell[Turn[0]][Turn[1]].kill()
+            if Turn == "Skip":
+                Players[PlayerNo-1].SpareTurns += 1
             else:
-                GameBoard.Cell[Turn[0]][Turn[1]].birth(config.Square, PlayerNo)
-            GameBoard.Cell[Turn[0]][Turn[1]].update()
-            GameBoard.take_turn()
-            GameBoard.update()
-            GameBoard.draw()
-    
+                if Turn[2]:
+                    GameBoard.Cell[Turn[0]][Turn[1]].kill()
+                else:
+                    GameBoard.Cell[Turn[0]][Turn[1]].birth(config.Square, PlayerNo)
+                GameBoard.Cell[Turn[0]][Turn[1]].update()
+                GameBoard.take_turn()
+                GameBoard.update()
+                Screen.fill(Game.Colour["Background"])
+                GameBoard.draw()
+
     elif MenuChoice == "Help":
         display_help(Help, Screen, HelpSurfaces)
     MenuChoice = get_menu_choice(config.Menu(), Screen)
