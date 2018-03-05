@@ -620,7 +620,6 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
                         Sim.GPSIsLimited, SimBoard)
         LastFrame = time.time()  # The time when the last frame update happened
         SimBoard.update()
-        SimBoard.update()
         SimBoard.draw()
         
         while True:
@@ -641,31 +640,37 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
     elif MenuChoice == "2-Player Game":
         PlayerNo = Game.NoOfPlayers
         GameBoard.update()
-        GameBoard.update()
         GameBoard.draw()
         Screen = pygame.display.set_mode((GameBoard.Size * GameBoard.Width + Game.RightColumnSize, GameBoard.Size * GameBoard.Height))
         Screen.fill(Game.Colour["Background"])
         Players = [Player(n, Game.Colour["Player" + str(n)]) for n in range(1, Game.NoOfPlayers + 1)]
         while True:
+            PlayerScores = [0 for _ in range(Game.NoOfPlayers + 1)]
+            for a in range(Game.Width):
+                for b in range(Game.Height):
+                    PlayerScores[GameBoard.Cell[a][b].CurrentPlayer] += 1
+            for p in range(Game.NoOfPlayers):
+                Players[p].NoOfCells = PlayerScores[p + 1]
             if PlayerNo == Game.NoOfPlayers:
                 PlayerNo = 1
             else:
                 PlayerNo += 1
             Screen.fill(Game.Colour["Background"])
-            write(Screen, Screen.get_width() - Game.RightColumnSize / 2, 10, Game.PlayerNames[PlayerNo-1] + "'s turn",
-                  Game.Colour["Player" + str(PlayerNo)], Game.TextSize, max_len=Game.RightColumnSize,
-                  alignment=("centre", "top"))
+            write(Screen, Screen.get_width() - Game.RightColumnSize / 2, Game.ButtonBorderSize,
+                  Game.PlayerNames[PlayerNo-1] + "'s turn", Game.Colour["Player" + str(PlayerNo)], Game.TextSize,
+                  max_len=Game.RightColumnSize, alignment=("centre", "top"))
+            bottom = [Screen.get_width() - Game.RightColumnSize + Game.ButtonBorderSize,
+                      Screen.get_height() - 2 * Game.ButtonBorderSize - Game.ButtonHeight]
             extra_space = 0
-            top = [Screen.get_width() - Game.RightColumnSize + Game.ButtonBorderSize,
-                   2 * Game.ButtonBorderSize + 3 * Game.TextSize]
-            for n in range(Game.NoOfPlayers):
+            for n in [Game.NoOfPlayers - a - 1 for a in range(Game.NoOfPlayers)]:
                 col = Players[n].Colour
-                extra_space += write(Screen, top[0], top[1] + extra_space, Game.PlayerNames[n], col, int(Game.TextSize / 1.2),
-                                     max_len=Game.RightColumnSize - 2 * Game.ButtonBorderSize)
-                extra_space += write(Screen, top[0], top[1] + extra_space, "Score: " + str(Players[n].NoOfCells), col,
-                                     int(Game.TextSize / 1.5))
-                extra_space += write(Screen, top[0], top[1] + extra_space, "Spare Turns: " + str(Players[n].SpareTurns), col,
-                                     int(Game.TextSize / 1.5))
+                extra_space += 4 * Game.ButtonBorderSize
+                extra_space += write(Screen, bottom[0], bottom[1] - extra_space, "Spare Turns: " + str(Players[n].SpareTurns),
+                                     col, int(Game.TextSize / 1.5), alignment=("left", "bottom")) + 2 * Game.ButtonBorderSize
+                extra_space += write(Screen, bottom[0], bottom[1] - extra_space, "Cells: " + str(Players[n].NoOfCells), col,
+                                     int(Game.TextSize / 1.5), alignment=("left", "bottom")) + 2 * Game.ButtonBorderSize
+                extra_space += write(Screen, bottom[0], bottom[1] - extra_space, Game.PlayerNames[n], col, int(Game.TextSize / 1.2),
+                                     max_len=Game.RightColumnSize - 2 * Game.ButtonBorderSize, alignment=("left", "bottom"))
              
             Turn = Players[PlayerNo - 1].take_turn(GameBoard, Game, Screen)
             if Turn == "Go Back":

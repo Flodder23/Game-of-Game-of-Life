@@ -1,7 +1,7 @@
 Dead = 0
 Square = 1
 Hex = 2
-Font = "boring"
+Font = "Arial"
 
 
 class Menu:
@@ -34,9 +34,8 @@ class Sim:
         self.Wrap = True  # Whether the board wraps around on itself
         self.Cushion = 0  # C 10 How far the board extends beyond the visible amount
         self.PreviewSize = 0
-        self.SetUpChances = (10, 1)  # The chances of a cell being dead or alive when game is first loaded
+        self.SetUpChances = (0, 0)  # The chances of a cell being dead or alive when game is first loaded
         
-        ##self.NoOfButtons = 0
         self.SliderSize = 50
         self.HighlightSize = 5
         self.NoOfNotches = 9
@@ -74,11 +73,11 @@ class Game:
         self.CellGap = 2  # C 2 The gap between each cell
         self.Wrap = True
         self.Cushion = 0
-        self.NoOfPlayers = 2  # C How many players there are - 2 or 4
+        self.NoOfPlayers = 4 # C How many players there are - 2 or 4
         self.PlayerNames = ["Joe", "Adam O'Neal", "Max", "Matej"][:self.NoOfPlayers]  # C Player's names
         self.PreviewSize = self.Size // 2
         self.SetUpChances = (10, 1, 1, 1, 1)[:self.NoOfPlayers+1]
-        self.TextSize = 35
+        self.TextSize = 32
         self.RightColumnSize = 150
         self.ButtonHeight = 50
         self.ButtonBorderSize = 3
