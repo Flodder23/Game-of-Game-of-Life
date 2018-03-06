@@ -4,8 +4,8 @@ import pygame
 import math as maths
 import config
 import preset
-import time
 import random
+import time
 import copy
 
 
@@ -42,31 +42,29 @@ class Cell:
             ar = 0
         if board.Wrap and b == board.Height - 1:
             bd = 0
-        if self.CurrentState == config.Dead or self.CurrentState == config.Square or self.CurrentState == config.Hex:
-            total[board.Cell[al][b].CurrentState] += 1
-            player[board.Cell[al][b].CurrentPlayer] += 1
-            
-            total[board.Cell[a][bu].CurrentState] += 1
-            player[board.Cell[a][bu].CurrentPlayer] += 1
-            
-            total[board.Cell[ar][b].CurrentState] += 1
-            player[board.Cell[ar][b].CurrentPlayer] += 1
-            
-            total[board.Cell[a][bd].CurrentState] += 1
-            player[board.Cell[a][bd].CurrentPlayer] += 1
+        total[board.Cell[al][b].CurrentState] += 1
+        player[board.Cell[al][b].CurrentPlayer] += 1
         
-        if self.CurrentState == config.Dead or self.CurrentState == config.Square:
-            total[board.Cell[al][bu].CurrentState] += 1
-            player[board.Cell[al][bu].CurrentPlayer] += 1
-            
-            total[board.Cell[ar][bu].CurrentState] += 1
-            player[board.Cell[ar][bu].CurrentPlayer] += 1
-            
-            total[board.Cell[al][bd].CurrentState] += 1
-            player[board.Cell[al][bd].CurrentPlayer] += 1
-            
-            total[board.Cell[ar][bd].CurrentState] += 1
-            player[board.Cell[ar][bd].CurrentPlayer] += 1
+        total[board.Cell[a][bu].CurrentState] += 1
+        player[board.Cell[a][bu].CurrentPlayer] += 1
+        
+        total[board.Cell[ar][b].CurrentState] += 1
+        player[board.Cell[ar][b].CurrentPlayer] += 1
+        
+        total[board.Cell[a][bd].CurrentState] += 1
+        player[board.Cell[a][bd].CurrentPlayer] += 1
+    
+        total[board.Cell[al][bu].CurrentState] += 1
+        player[board.Cell[al][bu].CurrentPlayer] += 1
+        
+        total[board.Cell[ar][bu].CurrentState] += 1
+        player[board.Cell[ar][bu].CurrentPlayer] += 1
+        
+        total[board.Cell[al][bd].CurrentState] += 1
+        player[board.Cell[al][bd].CurrentPlayer] += 1
+        
+        total[board.Cell[ar][bd].CurrentState] += 1
+        player[board.Cell[ar][bd].CurrentPlayer] += 1
         
         new_state = self.CurrentState
         new_player = self.CurrentPlayer
@@ -77,9 +75,6 @@ class Cell:
                 birth = True
         elif self.CurrentState == config.Square:
             if total[config.Dead] not in (5, 6):
-                death = True
-        elif self.CurrentState == config.Hex:
-            if total[config.Dead] not in (2, 3):
                 death = True
         if birth:
             del total[0]
@@ -96,16 +91,16 @@ class Cell:
         
         return new_state, new_player
     
-    def draw(self, size, board):
+    def draw(self, screen, size, board):
         x, y = self.Coordinates
         x += board.Size // 2
         y += board.Size // 2
-        pygame.draw.rect(Screen, board.Colour["Dead"], (x - size / 2, y - size / 2, size, size))
+        pygame.draw.rect(screen, board.Colour["Dead"], (x - size / 2, y - size / 2, size, size))
         if not self.CurrentState == config.Dead:
             if self.CurrentPlayer == 0:
-                self.draw_shape(size, x, y, board.Colour["Alive"])
+                self.draw_shape(screen, size, x, y, board.Colour["Alive"])
             else:
-                self.draw_shape(size, x, y, board.Colour["Player" + str(self.CurrentPlayer)])
+                self.draw_shape(screen, size, x, y, board.Colour["Player" + str(self.CurrentPlayer)])
     
     def update(self):
         self.CurrentState = self.NextState
@@ -113,9 +108,9 @@ class Cell:
 
 
 class Square(Cell):
-    def draw_shape(self, size, x, y, colour):
+    def draw_shape(self, screen, size, x, y, colour):
         """Draws a type of cell (Type) at the desired cell (a,b)"""
-        pygame.draw.rect(Screen, colour, (x - size / 2, y - size / 2, size, size))
+        pygame.draw.rect(screen, colour, (x - size / 2, y - size / 2, size, size))
 
 
 class Board:
@@ -147,7 +142,7 @@ class Board:
                                 self.Cell[a][b].birth(config.Square, c)
                             break
     
-    def draw(self, preview=False):
+    def draw(self, screen, preview=False, update_display=True):
         """draws the current board onto the screen then updates the display"""
         if preview:
             size = self.PreviewSize
@@ -155,8 +150,9 @@ class Board:
             size = self.Size - self.CellGap
         for a in range(self.Cushion, self.Cushion + self.Width):
             for b in range(self.Cushion, self.Cushion + self.Height):
-                self.Cell[a][b].draw(size, self)
-        pygame.display.update()
+                self.Cell[a][b].draw(screen, size, self)
+        if update_display:
+            pygame.display.update()
     
     def update(self):
         """Puts the NextState variables in the CurrentState variables"""
@@ -183,7 +179,7 @@ class Board:
                         else:
                             self.Cell[a][b].birth(fate, player)
     
-    def place_preset(self, preset_no, a, b):
+    def place_preset(self, screen, preset_no, a, b):
         if self.Wrap:
             shape = preset.get(preset_no, a, b, self)[0]
         else:
@@ -200,24 +196,24 @@ class Board:
                 else:
                     self.Cell[a + c][b + d].birth(shape[c][d], 0)
         self.update()
-        self.draw()
+        self.draw(screen)
     
     def reset(self, state):
         self.__init__(state, players=self.Players)
         self.update()
-        self.draw()
     
-    def show_future(self, a, b, kill, player):
+    def show_future(self, screen, actions, player):
         temp_board = copy.deepcopy(self)
-        if kill:
-            temp_board.Cell[a][b].kill()
-        else:
-            temp_board.Cell[a][b].birth(config.Square, player)
-        temp_board.Cell[a][b].update()
-        temp_board.draw()
+        for action in actions:
+            if action[2]:
+                temp_board.Cell[action[0]][action[1]].kill()
+            else:
+                temp_board.Cell[action[0]][action[1]].birth(config.Square, player)
+            temp_board.Cell[action[0]][action[1]].update()
+        temp_board.draw(screen, update_display=False)
         temp_board.take_turn()
         temp_board.update()
-        temp_board.draw(preview=True)
+        temp_board.draw(screen, preview=True)
 
 
 class Player:
@@ -227,380 +223,75 @@ class Player:
         self.NoOfCells = 0
         self.SpareTurns = 0
     
-    def take_turn(self, board, state, screen):
+    def take_turn(self, screen, board, state, players):
         turn_chosen = False
-        board.draw()
-        last_click = [0, 0, True]
+        board.draw(screen)
+        turn = []
         pygame.display.update()
-        mouse_held_down = False
-        showing_future = False
-        esc_held_down = False
-        space_held_down = True
-        has_let_go_of_mouse = False
+        held_down = {"mouse0": True, "mouse2": False, "esc": False, "space": False, "f": False}
+        show_future = True
         button_text = "Skip Turn"
-        while True:
+        turns_used = [0 for _ in range(state.NoOfPlayers)]
+        while not turn_chosen:
             events = pygame.event.get()
-            if check_quit(events):
-                if showing_future:
-                    board.draw()
-                    button_text = "Skip Turn"
-                    showing_future = False
-                    esc_held_down = True
-                elif not esc_held_down:
+            if config.check_quit(events) and not held_down["esc"]:  # if ESC is pressed
+                if len(turn) == 0:
                     return "Go Back"
+                else:
+                    del turn[-1]
+                    turns_used[self.Number - 1] -= 1
+                held_down["esc"] = True
             else:
-                esc_held_down = False
-            if not pygame.mouse.get_pressed()[0]:
-                has_let_go_of_mouse = True
+                held_down["esc"] = False
             x, y = pygame.mouse.get_pos()
-            a, b = get_square(x, y, board)
-            if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion and not mouse_held_down:
+            a, b = config.get_square(x, y, board)
+            if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
                 kill = None
-                if pygame.mouse.get_pressed()[0]:
-                    kill = False
-                elif pygame.mouse.get_pressed()[2]:
-                    kill = True
+                if len(turn) <= self.SpareTurns:
+                    if pygame.mouse.get_pressed()[0] and not held_down["mouse0"] and board.Cell[a][b].CurrentState == config.Dead:
+                        kill = False
+                    elif pygame.mouse.get_pressed()[2] and not held_down["mouse2"] and board.Cell[a][b].CurrentState != 0:
+                        kill = True
                 if kill is not None:
-                    board.show_future(a, b, kill, self.Number)
-                    showing_future = True
-                    turn_chosen = True
-                    last_click = [a, b, True]
-                    mouse_held_down = True
+                    turn.append([a, b, kill])
                     button_text = "Take Turn"
+                    turns_used[self.Number - 1] += 1
+            if pygame.key.get_pressed()[pygame.K_SPACE] and not held_down["space"]:
+                turn_chosen = True
+            if pygame.key.get_pressed()[pygame.K_f] and not held_down["f"]:
+                show_future = not show_future
             on_button = False
             if 2 * state.ButtonBorderSize < screen.get_width() - x < state.RightColumnSize - 2 * state.ButtonBorderSize:
                 if 0 < screen.get_height() - y - 2 * state.ButtonBorderSize < state.ButtonHeight:
-                    if pygame.mouse.get_pressed()[0] and has_let_go_of_mouse:
-                        if not turn_chosen:
-                            return "Skip"
-                        else:
-                            return last_click
-                    button_colour = state.Colour["Highlighter"]
+                    if pygame.mouse.get_pressed()[0] and not held_down["mouse0"]:
+                        turn_chosen = True
                     on_button = True
-            if not on_button:
-                button_colour = state.Colour["Text"]
-            pygame.draw.rect(screen, state.Colour["ButtonBorder"],
-                             (screen.get_width() - state.RightColumnSize + state.ButtonBorderSize,
-                              screen.get_height() - state.ButtonBorderSize - state.ButtonHeight,
-                              state.RightColumnSize - 2 * state.ButtonBorderSize, state.ButtonHeight))
-            pygame.draw.rect(screen, state.Colour["Background"],
-                             (screen.get_width() - state.RightColumnSize + 2 * state.ButtonBorderSize,
-                              screen.get_height() - state.ButtonHeight,
-                              state.RightColumnSize - 4 * state.ButtonBorderSize,
-                              state.ButtonHeight - 2 * state.ButtonBorderSize))
-            write(screen, screen.get_width() - state.RightColumnSize / 2,
-                  screen.get_height() - state.ButtonBorderSize - state.ButtonHeight / 2, button_text,
-                  button_colour, state.TextSize, max_len=state.RightColumnSize, alignment=("centre", "centre"))
-            if not (pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]) and mouse_held_down:
-                mouse_held_down = False
-            if pygame.key.get_pressed()[pygame.K_SPACE]:
-                if has_let_go_of_mouse and not space_held_down:
-                    if not turn_chosen:
-                        return "Skip"
-                    else:
-                        return last_click
-            else:
-                space_held_down = False
-            pygame.display.update()
 
-
-def check_user_input(sim, board):
-    """Checks for user input and acts accordingly"""
-    
-    go_back = check_quit(pygame.event.get())
-    x, y = pygame.mouse.get_pos()
-    a, b = get_square(x, y, board)
-    if sim.CanBePaused:
-        if pygame.key.get_pressed()[pygame.K_SPACE]:
-            sim.Paused = not sim.Paused
-            sim.CanBePaused = False
-    else:
-        if not pygame.key.get_pressed()[pygame.K_SPACE]:
-            sim.CanBePaused = True
-    for key in range(pygame.K_1, pygame.K_9):
-        if pygame.key.get_pressed()[key]:
-            board.place_preset(int(pygame.key.name(key)), a, b)
-    if sim.CanChangeGPSLimit:
-        if pygame.key.get_pressed()[pygame.K_f]:
-            sim.GPSIsLimited = not sim.GPSIsLimited
-            bottom_gps_log = maths.log(sim.BottomGPS, sim.TopGPS)
-            draw_gps_slider(Sim.EndOfSlider -
-                            ((maths.log(sim.GPS, sim.TopGPS) - bottom_gps_log) *
-                             (Sim.EndOfSlider - Sim.StartOfSlider)) / (1 - bottom_gps_log),
-                            sim.GPSIsLimited, board)
-            sim.CanChangeGPSLimit = False
-    else:
-        if not pygame.key.get_pressed()[pygame.K_f]:
-            sim.CanChangeGPSLimit = True
-    if pygame.key.get_pressed()[pygame.K_RIGHT]:
-        if sim.CanGoForward:
-            sim.OneTurn = True
-            sim.CanGoForward = False
-    else:
-        if not sim.CanGoForward:
-            sim.CanGoForward = True
-        sim.OneTurn = False
-    if pygame.key.get_pressed()[pygame.K_RETURN]:
-        board.reset(sim)
-        sim.Paused = True
-    if pygame.mouse.get_pressed()[0]:
-        if board.Size * board.Width + board.CellGap / 2 < x < (
-                    board.Size * board.Width) + Sim.SliderSize + board.CellGap / 2:
-            if y < Sim.StartOfSlider:
-                y = Sim.StartOfSlider
-            elif y > Sim.EndOfSlider:
-                y = Sim.EndOfSlider
-                sim.GPSIsLimited = True
-            draw_gps_slider(y, sim.GPSIsLimited, board)
-            bottom_gps_log = maths.log(sim.BottomGPS, sim.TopGPS)
-            sim.GPS = sim.TopGPS ** (((1 - bottom_gps_log) * (Sim.EndOfSlider - y)
-                                      / (Sim.EndOfSlider - Sim.StartOfSlider)) + bottom_gps_log)
-        elif 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
-            board.Cell[a][b].birth(config.Square, 0)
-            board.update()
-            board.draw()
-    if pygame.mouse.get_pressed()[2]:
-        board.Cell[a][b].kill()
-        board.update()
-        board.draw()
-    
-    return sim, go_back
-
-
-def draw_gps_slider(y, gps_limit, board):
-    """Draws the slider with the y coordinate of the button click
-       (How many GPS this corresponds to is not dealt with here.)"""
-    if y < Sim.StartOfSlider:
-        y = Sim.StartOfSlider
-    elif y > Sim.EndOfSlider:
-        y = Sim.EndOfSlider
-    pygame.draw.rect(Screen, Sim.Colour["Background"],
-                     ((Sim.ButtonStart, Sim.StartOfSlider - Sim.NotchLength),
-                      (Sim.ButtonStart + board.CellGap + Sim.HighlightSize + Sim.SliderSize, Sim.EndOfSlider)))
-    pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY, Sim.StartOfSlider), (Sim.SliderY, Sim.EndOfSlider))
-    for n in range(Sim.NoOfNotches):
-        pygame.draw.line(Screen, Sim.Colour["Text"], (Sim.SliderY - Sim.NotchLength / 2,
-                                                      Sim.StartOfSlider + n * Sim.SpaceBetweenNotches),
-                         (Sim.SliderY + Sim.NotchLength / 2, Sim.StartOfSlider + n * Sim.SpaceBetweenNotches))
-    write(Screen, Sim.SliderY - (12 + Sim.NotchLength), (Sim.StartOfSlider + Sim.EndOfSlider) * 0.5, "Speed",
-          Sim.Colour["Text"], 20, rotate=90, alignment=("left", "centre"))
-    if gps_limit:
-        colour = "Highlighter"
-    else:
-        colour = "Unselected"
-    pygame.draw.polygon(Screen, Sim.Colour[colour], ((Sim.SliderY + Sim.NotchLength / 2, y),
-                                                     (Sim.SliderY + Sim.NotchLength, y - Sim.NotchLength / 2),
-                                                     (Sim.SliderY + 2 * Sim.NotchLength, y - Sim.NotchLength / 2),
-                                                     (Sim.SliderY + 2 * Sim.NotchLength, y + Sim.NotchLength / 2),
-                                                     (Sim.SliderY + Sim.NotchLength, y + Sim.NotchLength / 2)))
-    pygame.display.update()
-
-
-def write(screen, x, y, text, colour, size, max_len=None, gap=0, font=config.Font, rotate=0, alignment=("left", "top")):
-    """Puts text onto the screen at point x,y. the alignment variable, if used, can take first value \"left\",
-    \"centre\" or \"right\" and the second value can be \"top\", \"centre\" or \"bottom\".
-    note that these values relate to x and y respectively whatever the rotation, which is in degrees.
-    max_len allows you to wrap a line if it becomes too long; the text will be restricted to being that many pixels long,
-    and if it gets longer a new line will be started"""
-    font_obj = pygame.font.SysFont(font, size)
-    if text == "":
-        line = 1
-        extra_space = size
-    else:
-        line = 0
-        extra_space = 0
-    while len(text.split()) > 0:
-        line += 1
-        msg_surface_obj = pygame.transform.rotate(font_obj.render(text, False, colour), rotate)
-        used = len(text.split())
-        while max_len is not None and msg_surface_obj.get_width() > max_len:
-            used -= 1
-            msg_surface_obj = pygame.transform.rotate(font_obj.render(" ".join(text.split()[:used]), False, colour), rotate)
-        msg_rect_obj = msg_surface_obj.get_rect()
-        a, b = msg_surface_obj.get_size()
-        if alignment[0] == "centre":
-            new_x = x - a / 2
-        elif alignment[0] == "right":
-            new_x = x - a
-        else:
-            new_x = x
-        if alignment[1] == "centre":
-            new_y = y - b / 2
-        elif alignment[1] == "bottom":
-            new_y = y - b
-        else:
-            new_y = y
-        msg_rect_obj.topleft = (new_x, new_y)
-        screen.blit(msg_surface_obj, msg_rect_obj)
-        y += msg_surface_obj.get_height() + gap
-        extra_space += msg_surface_obj.get_height() + gap
-        text = " ".join(text.split()[used:])
-    return extra_space
-
-
-def get_menu_choice(menu, screen):
-    pygame.display.set_caption("Game of Life - Main Menu")
-    pygame.display.set_mode((2 * menu.SideGapSize + menu.ButtonWidth,
-                             2 * menu.TitleGapSize + len(menu.Buttons) * (menu.ButtonHeight + menu.ButtonGapSize)))
-    screen.fill(menu.Colour["Background"])
-    
-    buttons = [[screen.get_width() / 2,
-                2 * menu.TitleGapSize + a * (menu.ButtonHeight + menu.ButtonGapSize) + menu.TitleTextSize,
-                menu.Buttons[a], menu.Colour["Text"]] for a in range(len(menu.Buttons))]
-    for a in range(len(menu.Buttons)):
-        pygame.draw.rect(screen, menu.Colour["Border"],
-                         (buttons[a][0] - menu.ButtonWidth / 2, buttons[a][1] - menu.ButtonHeight / 2, menu.ButtonWidth,
-                          menu.ButtonHeight))
-        pygame.draw.rect(screen, menu.Colour["Background"], ((buttons[a][0] - menu.ButtonWidth / 2 + menu.ButtonBorder,
-                                                              buttons[a][1] - menu.ButtonHeight / 2 + menu.ButtonBorder,
-                                                              menu.ButtonWidth - menu.ButtonBorder * 2,
-                                                              menu.ButtonHeight - menu.ButtonBorder * 2)))
-    
-    write(screen, screen.get_width() / 2, menu.TitleGapSize, "Main Menu", menu.Colour["Text"], menu.TitleTextSize,
-          alignment=("centre", "centre"))
-    
-    while True:
-        if check_quit(pygame.event.get()):
-            quit_game()
-        x, y = pygame.mouse.get_pos()
-        for a in range(len(menu.Buttons)):
-            buttons[a][3] = menu.Colour["Text"]
-        if screen.get_width() / 2 - menu.ButtonWidth / 2 < x < screen.get_width() / 2 + menu.ButtonWidth / 2:
-            for a in range(len(menu.Buttons)):
-                if buttons[a][1] - menu.ButtonHeight / 2 < y < buttons[a][1] + menu.ButtonHeight / 2:
-                    if pygame.mouse.get_pressed()[0]:
-                        return buttons[a][2]
-                    buttons[a][3] = menu.Colour["Hover"]
-        for a in range(len(menu.Buttons)):
-            write(screen, screen.get_width() / 2, buttons[a][1], buttons[a][2], buttons[a][3], menu.TextSize,
-                  alignment=("centre", "centre"))
-        pygame.display.update()
-
-
-def check_quit(events):
-    for event in events:
-        if event.type == pygame.QUIT:
-            quit_game()
-        if pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            return True
-    return False
-
-
-def quit_game():
-    pygame.quit()
-    import sys
-    sys.exit(0)
-
-
-def get_square(x, y, board):
-    a = min(x // board.Size, board.Width) + board.Cushion
-    b = min(y // board.Size, board.Height) + board.Cushion
-    return a, b
-
-
-def draw_help(screen, help_surface, state, slider_centre, slider_range):
-    pygame.draw.rect(screen, state.Colour["Background"],
-                     (int((state.Width - state.SliderWidth - state.SectionGapSize) / 2) - state.SliderGapSize, 0,
-                      state.Width, state.Height))
-    pygame.draw.rect(screen, state.Colour["Slider"],
-                     (state.Width - state.SliderGapSize - state.SliderWidth, slider_centre - state.SliderLength / 2,
-                      state.SliderWidth, state.SliderLength))
-    help_rect = help_surface.get_rect()
-    text_range = (state.SectionGapSize, help_surface.get_height() - state.Height + 2 * state.SectionGapSize)
-    top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) / (slider_range[1]
-                                                                                                   - slider_range[0])
-    help_rect.topleft = (int((state.Width - state.SliderWidth) / 2) + state.SliderGapSize, top_y)
-    screen.blit(help_surface, help_rect)
-    pygame.display.update()
-
-
-def display_help(state, screen, help_surfaces):
-    pygame.display.set_caption("Game of Life - Help")
-    pygame.display.set_mode((state.Width, help_surfaces[0].get_height()))
-    screen.fill(state.Colour["Background"])
-    state.Height = screen.get_height()
-    slider_range = (
-        state.SliderGapSize + state.SliderLength / 2, state.Height - state.SliderGapSize - state.SliderLength / 2)
-    slider_centre = slider_range[0]
-    help_rect = help_surfaces[0].get_rect()
-    help_rect.topleft = (state.SectionGapSize, state.SectionGapSize)
-    screen.blit(help_surfaces[0], help_rect)
-    draw_help(screen, help_surfaces[1], state, slider_centre, slider_range)
-    slider_last_turn = False
-    while True:
-        events = pygame.event.get()
-        if check_quit(events):
-            break
-        x, y = pygame.mouse.get_pos()
-        if pygame.mouse.get_pressed()[0]:
-            if not slider_last_turn and state.Width - 2 * state.SliderGapSize - state.SliderWidth < x < state.Width \
-                    and slider_centre - state.SliderLength / 2 < y < slider_centre + state.SliderLength / 2:
-                slider_last_turn = True
-                mouse_start = y
-            if slider_last_turn:
-                if slider_centre + y - mouse_start < slider_range[0]:
-                    y = slider_range[0] + mouse_start - slider_centre
-                elif slider_centre + y - mouse_start > slider_range[1]:
-                    y = slider_range[1] + mouse_start - slider_centre
-                draw_help(screen, help_surfaces[1], state, slider_centre + y - mouse_start, slider_range)
-        elif x > (state.Width - state.SliderWidth - state.SectionGapSize) / 2 - state.SliderGapSize:
-            for e in events:
-                if e.type == pygame.MOUSEBUTTONDOWN:
-                    draw = False
-                    if e.button == 4:
-                        slider_centre -= state.ScrollAmount
-                        slider_centre = max(slider_centre, slider_range[0])
-                        draw = True
-                    if e.button == 5:
-                        slider_centre += state.ScrollAmount
-                        slider_centre = min(slider_centre, slider_range[1])
-                        draw = True
-                    if draw:
-                        draw_help(screen, help_surfaces[1], state, slider_centre, slider_range)
-        
-        else:
-            if slider_last_turn:
-                slider_last_turn = False
-                slider_centre += y - mouse_start
-        pygame.display.update()
-
-
-def get_help_surfaces(state):
-    text = open("help.txt").read().split("++")
-    for section in range(len(text)):
-        text[section] = text[section].split("\n")
-    help_surfaces = []
-    
-    for section in text:
-        extra = 0
-        for _ in range(2):
-            help_surface = pygame.Surface(((state.Width - state.SliderWidth)
-                                           // 2 - state.SectionGapSize - state.SliderGapSize, extra))
-            help_surface.fill(state.Colour["Background"])
-            extra = 0
-            for line in section:
-                if line.startswith("**"):
-                    size = state.TitleSize
-                    line = line[2:]
+            births = [0 for _ in range(state.NoOfPlayers)]
+            deaths = [0 for _ in range(state.NoOfPlayers)]
+            for action in turn:
+                if action[2]:
+                    deaths[board.Cell[action[0]][action[1]].CurrentPlayer - 1] += 1
                 else:
-                    size = state.TextSize
-                indent = 0
-                while line.startswith("--"):
-                    indent += 1
-                    line = line[2:]
-                extra += write(help_surface, indent * state.IndentSize, extra, line, state.Colour["Text"], size,
-                               max_len=help_surface.get_width() - indent * state.IndentSize) + state.SectionGapSize
-        help_surfaces.append(help_surface)
-    return help_surfaces
+                    births[self.Number - 1] += 1
+            
+            state.draw_right_column(screen, players, self.Number, on_button, button_text, turns_used, births, deaths)
+            board.show_future(screen, turn, self.Number)
+            held_down["mouse0"] = pygame.mouse.get_pressed()[0]
+            held_down["mouse2"] = pygame.mouse.get_pressed()[2]
+            held_down["space"] = pygame.key.get_pressed()[pygame.K_SPACE]
+            held_down["f"] = pygame.key.get_pressed()[pygame.K_f]
+            pygame.display.update()
+        return turn
 
 
 pygame.init()
 pygame.event.set_allowed(None)
+Screen = pygame.display.set_mode((500, 500))
+pygame.display.set_icon(pygame.image.load("Icon.png"))
 allowed_events = (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT)
 for event in allowed_events:
     pygame.event.set_allowed(event)
-Screen = pygame.display.set_mode((500,500))
-pygame.display.set_icon(pygame.image.load("Icon.png"))
 Sim = config.Sim()
 SimBoard = Board(Sim)
 SimBoard.set_up(Sim.SetUpChances)
@@ -608,23 +299,22 @@ Game = config.Game()
 GameBoard = Board(Game, players=True)
 GameBoard.set_up(Game.SetUpChances)
 Help = config.Help()
-HelpSurfaces = get_help_surfaces(Help)
-MenuChoice = get_menu_choice(config.Menu(), Screen)
+Menu = config.Menu()
+MenuChoice = Menu.get_choice(Screen)
 
 while MenuChoice in ("Simulator", "2-Player Game", "Help"):
     if MenuChoice == "Simulator":
         Screen = pygame.display.set_mode((SimBoard.Size * SimBoard.Width + Sim.SliderSize,
                                           SimBoard.Size * SimBoard.Height))
         Screen.fill(Sim.Colour["Background"])
-        draw_gps_slider(((maths.log(Sim.GPS, 10) + 1) / -3) * (Sim.EndOfSlider - Sim.StartOfSlider) + Sim.EndOfSlider,
-                        Sim.GPSIsLimited, SimBoard)
+        Sim.draw_gps_slider(Screen, ((maths.log(Sim.GPS, 10) + 1) / -3)
+                            * (Sim.EndOfSlider - Sim.StartOfSlider) + Sim.EndOfSlider, Sim.GPSIsLimited, SimBoard)
         LastFrame = time.time()  # The time when the last frame update happened
         SimBoard.update()
-        SimBoard.draw()
+        SimBoard.draw(Screen)
         
         while True:
-            Sim, GoBack = check_user_input(Sim, SimBoard)
-            if GoBack:
+            if Sim.check_user_input(Screen, SimBoard):
                 break
             SimBoard.update()
             if (not Sim.Paused and (not Sim.GPSIsLimited or time.time() - LastFrame > 1 / Sim.GPS)) \
@@ -634,14 +324,15 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
                 SimBoard.take_turn()
                 SimBoard.update()
                 SimBoard.Generations += 1
-                SimBoard.draw()
+                SimBoard.draw(Screen)
                 LastFrame = time.time()
     
     elif MenuChoice == "2-Player Game":
         PlayerNo = Game.NoOfPlayers
         GameBoard.update()
-        GameBoard.draw()
-        Screen = pygame.display.set_mode((GameBoard.Size * GameBoard.Width + Game.RightColumnSize, GameBoard.Size * GameBoard.Height))
+        GameBoard.draw(Screen)
+        Screen = pygame.display.set_mode(
+            (GameBoard.Size * GameBoard.Width + Game.RightColumnSize, GameBoard.Size * GameBoard.Height))
         Screen.fill(Game.Colour["Background"])
         Players = [Player(n, Game.Colour["Player" + str(n)]) for n in range(1, Game.NoOfPlayers + 1)]
         while True:
@@ -655,40 +346,26 @@ while MenuChoice in ("Simulator", "2-Player Game", "Help"):
                 PlayerNo = 1
             else:
                 PlayerNo += 1
-            Screen.fill(Game.Colour["Background"])
-            write(Screen, Screen.get_width() - Game.RightColumnSize / 2, Game.ButtonBorderSize,
-                  Game.PlayerNames[PlayerNo-1] + "'s turn", Game.Colour["Player" + str(PlayerNo)], Game.TextSize,
-                  max_len=Game.RightColumnSize, alignment=("centre", "top"))
-            bottom = [Screen.get_width() - Game.RightColumnSize + Game.ButtonBorderSize,
-                      Screen.get_height() - 2 * Game.ButtonBorderSize - Game.ButtonHeight]
-            extra_space = 0
-            for n in [Game.NoOfPlayers - a - 1 for a in range(Game.NoOfPlayers)]:
-                col = Players[n].Colour
-                extra_space += 4 * Game.ButtonBorderSize
-                extra_space += write(Screen, bottom[0], bottom[1] - extra_space, "Spare Turns: " + str(Players[n].SpareTurns),
-                                     col, int(Game.TextSize / 1.5), alignment=("left", "bottom")) + 2 * Game.ButtonBorderSize
-                extra_space += write(Screen, bottom[0], bottom[1] - extra_space, "Cells: " + str(Players[n].NoOfCells), col,
-                                     int(Game.TextSize / 1.5), alignment=("left", "bottom")) + 2 * Game.ButtonBorderSize
-                extra_space += write(Screen, bottom[0], bottom[1] - extra_space, Game.PlayerNames[n], col, int(Game.TextSize / 1.2),
-                                     max_len=Game.RightColumnSize - 2 * Game.ButtonBorderSize, alignment=("left", "bottom"))
-             
-            Turn = Players[PlayerNo - 1].take_turn(GameBoard, Game, Screen)
+            Players[PlayerNo - 1].SpareTurns += 1
+            Turn = Players[PlayerNo - 1].take_turn(Screen, GameBoard, Game, Players)
             if Turn == "Go Back":
                 break
-            if Turn == "Skip":
-                Players[PlayerNo-1].SpareTurns += 1
             else:
-                if Turn[2]:
-                    GameBoard.Cell[Turn[0]][Turn[1]].kill()
+                if len(Turn) == 0:
+                    Players[PlayerNo - 1].SpareTurns += 1
                 else:
-                    GameBoard.Cell[Turn[0]][Turn[1]].birth(config.Square, PlayerNo)
-                GameBoard.Cell[Turn[0]][Turn[1]].update()
-                GameBoard.take_turn()
-                GameBoard.update()
-                Screen.fill(Game.Colour["Background"])
-                GameBoard.draw()
-
+                    for action in Turn:
+                        if action[2]:
+                            GameBoard.Cell[action[0]][action[1]].kill()
+                        else:
+                            GameBoard.Cell[action[0]][action[1]].birth(config.Square, PlayerNo)
+                        GameBoard.Cell[action[0]][action[1]].update()
+                    GameBoard.take_turn()
+                    GameBoard.update()
+                    Screen.fill(Game.Colour["Background"])
+                GameBoard.draw(Screen)
+    
     elif MenuChoice == "Help":
-        display_help(Help, Screen, HelpSurfaces)
-    MenuChoice = get_menu_choice(config.Menu(), Screen)
-quit_game()
+        Help.display(Screen)
+    MenuChoice = Menu.get_choice(Screen)
+config.quit_game()
