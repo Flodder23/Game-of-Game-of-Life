@@ -1,3 +1,10 @@
+import set_up
+import pygame
+import random
+import preset
+import copy
+
+
 class Cell:
     def __init__(self, a, b, current_state, next_state, board, player):
         """a,b are the coordinates of the cell the instance represents with respect to the board."""
@@ -203,9 +210,3 @@ class Board:
         temp_board.take_turn()
         temp_board.update()
         temp_board.draw(screen, preview=True)
-
-import set_up
-import pygame
-import random
-import preset
-import copy
