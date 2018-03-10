@@ -125,10 +125,21 @@ class Board:
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
     
-    def set_up(self, chances):
+    def set_up(self, chances, rotational_symmetry = False):
+        width = self.Width
+        height = self.Height
+        if rotational_symmetry:
+            if width > height:
+                width //= 2
+                if len(chances) == 5:
+                    height //= 2
+            else:
+                height //= 2
+                if len(chances) == 5:
+                    width //= 2
         if sum(chances) != 0:
-            for a in range(self.Width):
-                for b in range(self.Height):
+            for a in range(width):
+                for b in range(height):
                     n = random.randint(1, sum(chances))
                     for c in range(len(chances)):
                         if sum(chances[:c + 1]) > n:
@@ -137,6 +148,33 @@ class Board:
                                     c = 0
                                 self.Cell[a][b].birth(set_up.Square, c)
                             break
+        self.update()
+        
+        if rotational_symmetry:
+            if len(chances) == 5:
+                for a in range(width):
+                    for b in range(height):
+                        if self.Cell[a][b].CurrentPlayer != 0:
+                            player = self.Cell[a][b].CurrentPlayer + 1
+                            if player >= len(chances):
+                                player -= len(chances) - 1
+                            if width > height:
+                                self.Cell[a][height + b].birth(self.Cell[a][b].CurrentState, player)
+                            else:
+                                self.Cell[width + a][b].birth(self.Cell[a][b].CurrentState, player)
+                if width > height:
+                    height *= 2
+                else:
+                    width *= 2
+                self.update()
+            for a in range(width):
+                for b in range(height):
+                    if self.Cell[a][b].CurrentPlayer != 0:
+                        player = self.Cell[a][b].CurrentPlayer + 2
+                        if player >= len(chances):
+                            player -= len(chances) - 1
+                        self.Cell[-1 - a][-1 - b].birth(self.Cell[a][b].CurrentState, player)
+            self.update()
     
     def draw(self, screen, preview=False, update_display=True):
         """draws the current board onto the screen then updates the display"""

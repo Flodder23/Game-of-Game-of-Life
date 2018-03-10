@@ -39,11 +39,11 @@ S_Colour = {"Alive": (0, 0, 0),  # (0, 0, 0) # The colour of an alive cell
             "Unselected": (160, 160, 160)}  # (160, 160, 160) # The colour of the slider pointer whe not active
 
 ##GAME MODE
-G_Width = 25  # 50 # How many squares wide the board is
-G_Height = 15  # 30 # Ditto but with height
+G_Width = 24  # 50 # How many squares wide the board is - Must be divisible by 2
+G_Height = 16  # 30 # Ditto but with height - Must be divisible by 2
 G_Size = 35  # 20 # The size of the sides of each square (in pixels)
 G_CellGap = 2  # 2 # The gap between each cell
-G_NoOfPlayers = 2  # 2 # How many players there are - 2 or 4
+G_NoOfPlayers = 2  # 2 # How many players there are - must be 2 or 4
 G_PlayerNames = ["Joe", "Adam O'Neal", "Max", "Matej"]  # Player's names
 G_PreviewSize = G_Size // 2  # G_Size // 2 # The size of the cells in preview mode
 G_SetUpChances = (10, 1, 1, 1, 1)  # (10, 1, 1, 1, 1) # The liklehood of each player's cells spawning in a cell (first one is chance of none spawning) at the start of a game
