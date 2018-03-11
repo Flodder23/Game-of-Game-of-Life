@@ -309,17 +309,9 @@ class Game:
                         turn_chosen = True
                     on_button = True
         
-            births = [0 for _ in range(self.NoOfPlayers)]
-            deaths = [0 for _ in range(self.NoOfPlayers)]
-            for action in turn:
-                if action[2]:
-                    deaths[board.Cell[action[0]][action[1]].CurrentPlayer - 1] += 1
-                else:
-                    births[player_no - 1] += 1
-        
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), player_no,
                                    on_button, button_text, turns_used)
-            board.show_future(screen, turn, player_no)
+            board.show_future(screen, turn, player_no, smaller=show_future)
             held_down["mouse0"] = pygame.mouse.get_pressed()[0]
             held_down["mouse2"] = pygame.mouse.get_pressed()[2]
             held_down["space"] = pygame.key.get_pressed()[pygame.K_SPACE]
@@ -432,17 +424,22 @@ class Help:
                 break
             x, y = pygame.mouse.get_pos()
             if pygame.mouse.get_pressed()[0]:
-                if not slider_last_turn and self.Width - 2 * self.SliderGapSize - self.SliderWidth < x < self.Width \
-                        and slider_centre - self.SliderLength / 2 < y < slider_centre + self.SliderLength / 2:
+                if not slider_last_turn and -2 * self.SliderGapSize - self.SliderWidth < x - self.Width < 0:
                     slider_last_turn = True
                     mouse_start = y
+                    if not slider_centre - self.SliderLength / 2 < y < slider_centre + self.SliderLength / 2:
+                        slider_centre = y
                 if slider_last_turn:
                     if slider_centre + y - mouse_start < slider_range[0]:
                         y = slider_range[0] + mouse_start - slider_centre
                     elif slider_centre + y - mouse_start > slider_range[1]:
                         y = slider_range[1] + mouse_start - slider_centre
                     self.draw(screen, self.Surfaces[1], slider_centre + y - mouse_start, slider_range)
-            elif x > (self.Width - self.SliderWidth - self.SectionGapSize) / 2 - self.SliderGapSize:
+            else:
+                if slider_last_turn:
+                    slider_last_turn = False
+                    slider_centre += y - mouse_start
+            if x > (self.Width - self.SliderWidth - self.SectionGapSize) / 2 - self.SliderGapSize:
                 for e in events:
                     if e.type == pygame.MOUSEBUTTONDOWN:
                         draw = False
@@ -456,11 +453,7 @@ class Help:
                             draw = True
                         if draw:
                             self.draw(screen, self.Surfaces[1], slider_centre, slider_range)
-        
-            else:
-                if slider_last_turn:
-                    slider_last_turn = False
-                    slider_centre += y - mouse_start
+
             pygame.display.update()
     
     def draw(self, screen, help_surface, slider_centre, slider_range):

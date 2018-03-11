@@ -125,18 +125,17 @@ class Board:
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
     
-    def set_up(self, chances, rotational_symmetry = False):
+    def set_up(self, chances, rotational_symmetry=None):
         width = self.Width
         height = self.Height
-        if rotational_symmetry:
+        if rotational_symmetry == 2:
             if width > height:
                 width //= 2
-                if len(chances) == 5:
-                    height //= 2
             else:
                 height //= 2
-                if len(chances) == 5:
-                    width //= 2
+        elif rotational_symmetry == 4:
+            width //= 2
+            height //= 2
         if sum(chances) != 0:
             for a in range(width):
                 for b in range(height):
@@ -150,14 +149,14 @@ class Board:
                             break
         self.update()
         
-        if rotational_symmetry:
-            if len(chances) == 5:
+        if rotational_symmetry is not None:
+            if rotational_symmetry == 4:
                 for a in range(width):
                     for b in range(height):
                         if self.Cell[a][b].CurrentPlayer != 0:
                             player = self.Cell[a][b].CurrentPlayer + 1
-                            if player >= len(chances):
-                                player -= len(chances) - 1
+                            if player > rotational_symmetry:
+                                player -= rotational_symmetry
                             if width > height:
                                 self.Cell[a][height + b].birth(self.Cell[a][b].CurrentState, player)
                             else:
@@ -170,9 +169,9 @@ class Board:
             for a in range(width):
                 for b in range(height):
                     if self.Cell[a][b].CurrentPlayer != 0:
-                        player = self.Cell[a][b].CurrentPlayer + 2
-                        if player >= len(chances):
-                            player -= len(chances) - 1
+                        player = self.Cell[a][b].CurrentPlayer + rotational_symmetry // 2
+                        if player > rotational_symmetry:
+                            player -= rotational_symmetry
                         self.Cell[-1 - a][-1 - b].birth(self.Cell[a][b].CurrentState, player)
             self.update()
     
@@ -236,7 +235,7 @@ class Board:
         self.__init__(state, players=self.Players)
         self.update()
     
-    def show_future(self, screen, actions, player):
+    def show_future(self, screen, actions, player, smaller=True):
         temp_board = copy.deepcopy(self)
         for action in actions:
             if action[2]:
@@ -245,6 +244,7 @@ class Board:
                 temp_board.Cell[action[0]][action[1]].birth(set_up.Square, player)
             temp_board.Cell[action[0]][action[1]].update()
         temp_board.draw(screen, update_display=False)
-        temp_board.take_turn()
-        temp_board.update()
-        temp_board.draw(screen, preview=True)
+        if smaller:
+            temp_board.take_turn()
+            temp_board.update()
+            temp_board.draw(screen, preview=True)
