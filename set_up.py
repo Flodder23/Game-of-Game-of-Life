@@ -3,6 +3,7 @@ import config
 import math as maths
 import time
 import copy
+
 Font = config.Font
 Dead = 0
 Square = 1
@@ -99,10 +100,10 @@ class Sim:
         self.GPSIsLimited = True
         self.Paused = True
         self.OneTurn = False
-        self.HeldDown ={"space": True,
-                        "right": True,
-                        "number": True,
-                        "f": True}
+        self.HeldDown = {"space": True,
+                         "right": True,
+                         "number": True,
+                         "f": True}
         self.Colour = config.S_Colour
     
     def run(self, screen, board):
@@ -113,7 +114,7 @@ class Sim:
         last_frame = time.time()
         board.update()
         board.draw(screen)
-    
+        
         while not self.check_user_input(screen, board):
             board.update()
             if (not self.Paused and (not self.GPSIsLimited or time.time() - last_frame > 1 / self.GPS)) \
@@ -228,6 +229,8 @@ class Game:
         self.RightColumnSize = config.G_RightColumnSize
         self.ButtonHeight = config.G_ButtonHeight
         self.ButtonBorderSize = config.G_ButtonBorderSize
+        self.PartImmuneTime = 3
+        self.FullImmuneTime = 5
         self.Colour = config.G_Colour
         self.Players = [Player(n, self.Colour["Player" + str(n)]) for n in range(1, self.NoOfPlayers + 1)]
     
@@ -251,20 +254,18 @@ class Game:
             if turn == "Go Back":
                 break
             else:
-                if len(turn) == 0:
-                    self.Players[player_no - 1].SpareTurns += 1
-                else:
-                    for action in turn:
-                        if action[2]:
-                            board.Cell[action[0]][action[1]].kill()
-                        else:
-                            board.Cell[action[0]][action[1]].birth(Square, player_no)
-                        board.Cell[action[0]][action[1]].update()
-                    board.take_turn()
-                    board.update()
-                    screen.fill(self.Colour["Background"])
+                for action in turn:
+                    if action[2]:
+                        board.Cell[action[0]][action[1]].kill()
+                    else:
+                        board.Cell[action[0]][action[1]].birth(Square, player_no)
+                    board.Cell[action[0]][action[1]].update()
+                    self.Players[player_no - 1].SpareTurns -= 1
+                board.take_turn()
+                board.update()
+                screen.fill(self.Colour["Background"])
                 board.draw(screen)
-
+    
     def take_turn(self, screen, board, player_no):
         turn_chosen = False
         board.draw(screen)
@@ -308,7 +309,7 @@ class Game:
                     if pygame.mouse.get_pressed()[0] and not held_down["mouse0"]:
                         turn_chosen = True
                     on_button = True
-        
+            
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), player_no,
                                    on_button, button_text, turns_used)
             board.show_future(screen, turn, player_no, smaller=show_future)
@@ -327,12 +328,17 @@ class Game:
             else:
                 temp_board.Cell[action[0]][action[1]].birth(Square, player_no)
             temp_board.Cell[action[0]][action[1]].update()
-        if (pygame.mouse.get_pressed()[0] and temp_board.Cell[a][b].CurrentState == Dead) or\
-                (pygame.mouse.get_pressed()[2] and temp_board.Cell[a][b].CurrentState != Dead):
-            return True
-        return False
-
-    def get_player_scores(self, board, turns = None, player_no = 0):
+        if temp_board.Cell[a][b].CurrentPlayer == player_no:
+            return kill
+        elif temp_board.Cell[a][b].CurrentState == Dead:
+            return not kill
+        else:
+            if temp_board.Cell[a][b].FullImmune:
+                return False
+            else:
+                return True
+    
+    def get_player_scores(self, board, turns=None, player_no=0):
         player_scores = [0 for _ in range(self.NoOfPlayers + 1)]
         if turns is None:
             for a in range(self.Width):
@@ -404,7 +410,7 @@ class Help:
         self.ScrollAmount = config.H_ScrollAmount
         self.Colour = config.H_Colour
         self.Surfaces = self.get_surfaces()
-
+    
     def display(self, screen):
         pygame.display.set_caption("Game of Life - Help")
         pygame.display.set_mode((self.Width, self.Surfaces[0].get_height()))
@@ -453,7 +459,7 @@ class Help:
                             draw = True
                         if draw:
                             self.draw(screen, self.Surfaces[1], slider_centre, slider_range)
-
+            
             pygame.display.update()
     
     def draw(self, screen, help_surface, slider_centre, slider_range):

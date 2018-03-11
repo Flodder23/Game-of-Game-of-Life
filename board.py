@@ -13,12 +13,18 @@ class Cell:
         self.CurrentPlayer = 0
         self.NextPlayer = player
         self.BoardPos = (a, b)
+        self.AliveFor = 0
+        self.PartImmune = False
+        self.FullImmune = False
         self.Coordinates = ((self.BoardPos[0] - board.Cushion) * board.Size + board.CellGap / 2,
                             (self.BoardPos[1] - board.Cushion) * board.Size + board.CellGap / 2)
     
     def kill(self):
         self.NextState = set_up.Dead
         self.NextPlayer = 0
+        self.AliveFor = 0
+        self.PartImmune = False
+        self.FullImmune = False
     
     def birth(self, state, player):
         self.NextState = state
@@ -98,9 +104,17 @@ class Cell:
             else:
                 self.draw_shape(screen, size, x, y, board.Colour["Player" + str(self.CurrentPlayer)])
     
-    def update(self):
+    def update(self, board=None, immunity=False):
         self.CurrentState = self.NextState
         self.CurrentPlayer = self.NextPlayer
+        if immunity:
+            if self.AliveFor >= board.FullImmuneTime:
+                self.FullImmune = True
+            else:
+                if self.AliveFor >= board.PartImmuneTime:
+                    self.PartImmune = True
+                else:
+                    self.AliveFor += 1
 
 
 class Square(Cell):
@@ -121,6 +135,8 @@ class Board:
         self.Colour = state.Colour
         self.PreviewSize = state.PreviewSize
         self.Players = players
+        self.PartImmuneTime = 3
+        self.FullImmuneTime = 5
         self.Cell = [[Square(a, b, set_up.Square, set_up.Dead, self, 0) for b in range(
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
         pygame.display.set_caption("Game of Life - Generation 0")
@@ -187,11 +203,11 @@ class Board:
         if update_display:
             pygame.display.update()
     
-    def update(self):
-        """Puts the NextState variables in the CurrentState variables"""
+    def update(self, immunity=False):
+        """Puts the NextState variables in the CurrentState variables, updated immunity if applicable"""
         for a in range(self.Width + 2 * self.Cushion):
             for b in range(self.Height + 2 * self.Cushion):
-                self.Cell[a][b].update()
+                self.Cell[a][b].update(immunity=immunity)
     
     def take_turn(self):
         """Changes the NextState variables & updates display caption"""
