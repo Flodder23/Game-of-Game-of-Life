@@ -1,23 +1,55 @@
-# Game-of-Game-of-Life
-This is a Conway's game of life simulator. At the moment it is pretty basic but I hope to impliment:
- - A 2-Player VS mode
- - Different types of cell
-as well as some improvements to the simulator overall.
+# About the Game of Life
+
+The universe of the Game of Life is an infinite two-dimensional orthogonal grid of square cells, each of which is in one of two possible states, alive or dead, or "populated" or "unpopulated".
+
+Every cell interacts with its eight neighbours, which are the cells that are horizontally, vertically, or diagonally adjacent.
+
+At each step in time, the following transitions occur:
+- Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
+- Any live cell with two or three live neighbours lives on to the next generation.
+- Any live cell with more than three live neighbours dies, as if by overpopulation.
+- Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+
+The initial pattern constitutes the seed of the system. The first generation is created by applying the above rules simultaneously to every cell in the seed - births and deaths occur simultaneously, and the discrete moment at which this happens is sometimes called a tick (in other words, each generation is a pure function of the preceding one). The rules continue to be applied repeatedly to create further generations.
+
+(Thanks, Wikipedia)
 
 
-Controls are as follows:
-  - LEFT CLICK to make a cell "alive".
-  - RIGHT CLICK to kill a cell.
-  - Press SPACE to pause/unpause the game.
-  - Press RIGHT Arrow to move forward a single turn when paused.
-  - Press ENTER to clear the board.
-  - Presets (Press the corresponding number to place one):
-    - 1 - Glider
-    - 2 - Small Exploder
-    - 3 - Exploder
-    - 4 - Light Weight Space Ship
-    - 5 - Tumbler
-    - 6 - Gosper Glider Gun
-    - 7 - Pentadecathlon
-    - 8 - r-Pentomino
-- Press ESC to exit to the main menu.
+# General Help:
+To change how the game looks, go into config.py and change the values there.
+Each part looks like this:
+<Name> = <Value>  # <Original value> # <description of what changing the value will do>
+If the game is behaving oddly please check these values - ones which vary too far from the original may break the game
+
+## General Controls:
+ - LEFT CLICK to make a cell "alive".
+ - RIGHT CLICK to kill a cell.
+ - Press ESC to exit to the main menu
+
+## Simulator Controls:
+ - Press SPACE to pause/unpause the game.
+ - Press RIGHT arrow to move forward a single turn when paused.
+ - Press ENTER to clear the board.
+ - Presets (Press the corresponding number to place one):
+   - 1 - Glider
+   - 2 - Small Exploder
+   - 3 - Exploder
+   - 4 - Light Weight Space Ship
+   - 5 - Tumbler
+   - 6 - Gosper Glider Gun
+   - 7 - Pentadecathlon
+   - 8 - r-Pentomino
+
+# 2-Player Game
+This is a 2-player game based on the mechanics of the simulator. Players take it in turns to either place one of their own cells or kill any living cell.
+There are 2 modes:
+ - 1 vs 1 - This is where both players are trying to get as many of their own colour on the board as possible. The winner is the one who either gets the most after a pre-determined amount of turns or who gets a certain amount first. The board has rotational symmetry, with colours on one half the opposite to the cell it corresponds to on the other half, to make it fair.
+
+- The Other Mode - This is where one player is trying to get as many cells on the board as they can, the other has to try and kill all their cells. The player placing cells gets 2 turns for every turn their opponent gets.
+
+There are also options to add to the original mechanics, such as cells becoming immune after being alive for a certain amount of turns.
+You can also skip turns, saving that turn for the future (eg. if you skip a turn, the next turn you can replace one of you opponent's cells with your own, as that takes 2 turns - one to kill the opponent's cell, the other to place your's.)
+Game Controls:
+- Press CTRL to use multiple turns in one.
+- Press ESC to deselect a cell when taking a turn.
+- Press F to show/hide what the board will look like next turn (the smaller squares)
