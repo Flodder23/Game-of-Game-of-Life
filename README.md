@@ -49,7 +49,7 @@ There are 2 modes:
 
 There are also options to add to the original mechanics, such as cells becoming immune after being alive for a certain amount of turns.
 You can also skip turns, saving that turn for the future (eg. if you skip a turn, the next turn you can replace one of you opponent's cells with your own, as that takes 2 turns - one to kill the opponent's cell, the other to place your's.)
-Game Controls:
+## Game Controls:
 - Press CTRL to use multiple turns in one.
 - Press ESC to deselect a cell when taking a turn.
 - Press F to show/hide what the board will look like next turn (the smaller squares)
