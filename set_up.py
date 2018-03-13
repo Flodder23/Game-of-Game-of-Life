@@ -9,7 +9,7 @@ Dead = 0
 Square = 1
 
 
-class Player:
+class Player():
     def __init__(self, number, colour):
         self.Number = number
         self.Colour = colour
@@ -38,19 +38,19 @@ class Menu:
                                  2 * self.TitleGapSize + len(self.Buttons) * (self.ButtonHeight + self.ButtonGapSize)))
         screen.fill(self.Colour["Background"])
         
-        buttons = [[screen.get_width() / 2,
+        buttons = [[screen.get_width() // 2,
                     2 * self.TitleGapSize + a * (self.ButtonHeight + self.ButtonGapSize) + self.TitleTextSize,
                     self.Buttons[a], self.Colour["Text"]] for a in range(len(self.Buttons))]
         for a in range(len(self.Buttons)):
             pygame.draw.rect(screen, self.Colour["Border"],
-                             (buttons[a][0] - self.ButtonWidth / 2, buttons[a][1] - self.ButtonHeight / 2, self.ButtonWidth,
+                             (buttons[a][0] - self.ButtonWidth // 2, buttons[a][1] - self.ButtonHeight // 2, self.ButtonWidth,
                               self.ButtonHeight))
-            pygame.draw.rect(screen, self.Colour["Background"], ((buttons[a][0] - self.ButtonWidth / 2 + self.ButtonBorder,
-                                                                  buttons[a][1] - self.ButtonHeight / 2 + self.ButtonBorder,
+            pygame.draw.rect(screen, self.Colour["Background"], ((buttons[a][0] - self.ButtonWidth // 2 + self.ButtonBorder,
+                                                                  buttons[a][1] - self.ButtonHeight // 2 + self.ButtonBorder,
                                                                   self.ButtonWidth - self.ButtonBorder * 2,
                                                                   self.ButtonHeight - self.ButtonBorder * 2)))
         
-        write(screen, screen.get_width() / 2, self.TitleGapSize, "Main Menu", self.Colour["Text"], self.TitleTextSize,
+        write(screen, screen.get_width() // 2, self.TitleGapSize, "Main Menu", self.Colour["Text"], self.TitleTextSize,
               alignment=("centre", "centre"))
         
         while True:
@@ -66,7 +66,7 @@ class Menu:
                             return buttons[a][2]
                         buttons[a][3] = self.Colour["Hover"]
             for a in range(len(self.Buttons)):
-                write(screen, screen.get_width() / 2, buttons[a][1], buttons[a][2], buttons[a][3], self.TextSize,
+                write(screen, screen.get_width() // 2, buttons[a][1], buttons[a][2], buttons[a][3], self.TextSize,
                       alignment=("centre", "centre"))
             pygame.display.update()
 
@@ -90,8 +90,8 @@ class Sim:
         self.NotchLength = config.S_NotchLength
         self.StartOfSlider = 2 * self.NotchLength
         self.EndOfSlider = self.Height * self.Size - self.HighlightSize - self.NotchLength
-        self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) / (self.NoOfNotches - 1)
-        self.SliderY = self.Size * self.Width + self.CellGap / 2 + self.SliderSize / 2
+        self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) // (self.NoOfNotches - 1)
+        self.SliderY = self.Size * self.Width + self.CellGap // 2 + self.SliderSize // 2
         self.ButtonStart = self.Size * self.Width
         
         self.GPS = config.S_GPS
@@ -109,7 +109,7 @@ class Sim:
     def run(self, screen, board):
         pygame.display.set_mode((board.Size * board.Width + self.SliderSize, board.Size * board.Height))
         screen.fill(self.Colour["Background"])
-        self.draw_gps_slider(screen, ((maths.log(self.GPS, 10) + 1) / -3)
+        self.draw_gps_slider(screen, ((maths.log(self.GPS, 10) + 1) // -3)
                              * (self.EndOfSlider - self.StartOfSlider) + self.EndOfSlider, self.GPSIsLimited, board)
         last_frame = time.time()
         board.update()
@@ -132,7 +132,7 @@ class Sim:
         
         go_back = check_quit(pygame.event.get())
         x, y = pygame.mouse.get_pos()
-        a, b = get_square(x, y, board)
+        a, b = board.get_square(x, y)
         if pygame.key.get_pressed()[pygame.K_SPACE] and not self.HeldDown["space"]:
             self.Paused = not self.Paused
         if pygame.key.get_pressed()[pygame.K_f] and not self.HeldDown["f"]:
@@ -140,7 +140,7 @@ class Sim:
             bottom_gps_log = maths.log(self.BottomGPS, self.TopGPS)
             self.draw_gps_slider(screen, self.EndOfSlider -
                                  ((maths.log(self.GPS, self.TopGPS) - bottom_gps_log) *
-                                  (self.EndOfSlider - self.StartOfSlider)) / (1 - bottom_gps_log),
+                                  (self.EndOfSlider - self.StartOfSlider)) // (1 - bottom_gps_log),
                                  self.GPSIsLimited, board)
         if pygame.key.get_pressed()[pygame.K_RIGHT] and not self.HeldDown["right"]:
             self.OneTurn = True
@@ -194,20 +194,20 @@ class Sim:
                           (self.ButtonStart + board.CellGap + self.HighlightSize + self.SliderSize, self.EndOfSlider)))
         pygame.draw.line(screen, self.Colour["Text"], (self.SliderY, self.StartOfSlider), (self.SliderY, self.EndOfSlider))
         for n in range(self.NoOfNotches):
-            pygame.draw.line(screen, self.Colour["Text"], (self.SliderY - self.NotchLength / 2,
+            pygame.draw.line(screen, self.Colour["Text"], (self.SliderY - self.NotchLength // 2,
                                                            self.StartOfSlider + n * self.SpaceBetweenNotches),
-                             (self.SliderY + self.NotchLength / 2, self.StartOfSlider + n * self.SpaceBetweenNotches))
+                             (self.SliderY + self.NotchLength // 2, self.StartOfSlider + n * self.SpaceBetweenNotches))
         write(screen, self.SliderY - (12 + self.NotchLength), (self.StartOfSlider + self.EndOfSlider) * 0.5, "Speed",
               self.Colour["Text"], 20, rotate=90, alignment=("left", "centre"))
         if gps_limit:
             colour = "Highlighter"
         else:
             colour = "Unselected"
-        pygame.draw.polygon(screen, self.Colour[colour], ((self.SliderY + self.NotchLength / 2, y),
-                                                          (self.SliderY + self.NotchLength, y - self.NotchLength / 2),
-                                                          (self.SliderY + 2 * self.NotchLength, y - self.NotchLength / 2),
-                                                          (self.SliderY + 2 * self.NotchLength, y + self.NotchLength / 2),
-                                                          (self.SliderY + self.NotchLength, y + self.NotchLength / 2)))
+        pygame.draw.polygon(screen, self.Colour[colour], ((self.SliderY + self.NotchLength // 2, y),
+                                                          (self.SliderY + self.NotchLength, y - self.NotchLength // 2),
+                                                          (self.SliderY + 2 * self.NotchLength, y - self.NotchLength // 2),
+                                                          (self.SliderY + 2 * self.NotchLength, y + self.NotchLength // 2),
+                                                          (self.SliderY + self.NotchLength, y + self.NotchLength // 2)))
         pygame.display.update()
 
 
@@ -262,7 +262,7 @@ class Game:
                     board.Cell[action[0]][action[1]].update()
                     self.Players[player_no - 1].SpareTurns -= 1
                 board.take_turn()
-                board.update()
+                board.update(immunity=True)
                 screen.fill(self.Colour["Background"])
                 board.draw(screen)
     
@@ -287,7 +287,7 @@ class Game:
             else:
                 held_down["esc"] = False
             x, y = pygame.mouse.get_pos()
-            a, b = get_square(x, y, board)
+            a, b = board.get_square(x, y)
             if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
                 kill = None
                 if len(turn) < self.Players[player_no - 1].SpareTurns and not (held_down["mouse0"] or held_down["mouse2"]):
@@ -320,7 +320,8 @@ class Game:
             pygame.display.update()
         return turn
     
-    def check_turn_is_valid(self, board, turns, player_no, a, b, kill):
+    @staticmethod
+    def check_turn_is_valid(board, turns, player_no, a, b, kill):
         temp_board = copy.deepcopy(board)
         for action in turns:
             if action[2]:
@@ -361,7 +362,7 @@ class Game:
         pygame.draw.rect(screen, self.Colour["Background"], (screen.get_width() - self.RightColumnSize, 0,
                                                              self.RightColumnSize, screen.get_height()))
         
-        write(screen, screen.get_width() - self.RightColumnSize / 2, self.ButtonBorderSize,
+        write(screen, screen.get_width() - self.RightColumnSize // 2, self.ButtonBorderSize,
               self.PlayerNames[active_player_no - 1] + "'s turn", self.Colour["Player" + str(active_player_no)],
               self.TextSize, max_len=self.RightColumnSize, alignment=("centre", "top"))
         pygame.draw.rect(screen, self.Colour["ButtonBorder"],
@@ -377,8 +378,8 @@ class Game:
             button_colour = self.Colour["Highlighter"]
         else:
             button_colour = self.Colour["Text"]
-        write(screen, screen.get_width() - self.RightColumnSize / 2,
-              screen.get_height() - self.ButtonBorderSize - self.ButtonHeight / 2, button_text,
+        write(screen, screen.get_width() - self.RightColumnSize // 2,
+              screen.get_height() - self.ButtonBorderSize - self.ButtonHeight // 2, button_text,
               button_colour, self.TextSize, max_len=self.RightColumnSize, alignment=("centre", "centre"))
         bottom = [screen.get_width() - self.RightColumnSize + self.ButtonBorderSize,
                   screen.get_height() - 2 * self.ButtonBorderSize - self.ButtonHeight]
@@ -417,7 +418,7 @@ class Help:
         screen.fill(self.Colour["Background"])
         self.Height = screen.get_height()
         slider_range = (
-            self.SliderGapSize + self.SliderLength / 2, self.Height - self.SliderGapSize - self.SliderLength / 2)
+            self.SliderGapSize + self.SliderLength // 2, self.Height - self.SliderGapSize - self.SliderLength // 2)
         slider_centre = slider_range[0]
         help_rect = self.Surfaces[0].get_rect()
         help_rect.topleft = (self.SectionGapSize, self.SectionGapSize)
@@ -464,16 +465,16 @@ class Help:
     
     def draw(self, screen, help_surface, slider_centre, slider_range):
         pygame.draw.rect(screen, self.Colour["Background"],
-                         (int((self.Width - self.SliderWidth - self.SectionGapSize) / 2) - self.SliderGapSize, 0,
+                         ((self.Width - self.SliderWidth - self.SectionGapSize) // 2 - self.SliderGapSize, 0,
                           self.Width, self.Height))
         pygame.draw.rect(screen, self.Colour["Slider"],
-                         (self.Width - self.SliderGapSize - self.SliderWidth, slider_centre - self.SliderLength / 2,
+                         (self.Width - self.SliderGapSize - self.SliderWidth, slider_centre - self.SliderLength // 2,
                           self.SliderWidth, self.SliderLength))
         help_rect = help_surface.get_rect()
         text_range = (self.SectionGapSize, help_surface.get_height() - self.Height + 2 * self.SectionGapSize)
-        top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) / (slider_range[1]
+        top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) // (slider_range[1]
                                                                                                        - slider_range[0])
-        help_rect.topleft = (int((self.Width - self.SliderWidth) / 2) + self.SliderGapSize, top_y)
+        help_rect.topleft = (int((self.Width - self.SliderWidth) // 2) + self.SliderGapSize, top_y)
         screen.blit(help_surface, help_rect)
         pygame.display.update()
     
@@ -529,13 +530,13 @@ def write(screen, x, y, text, colour, size, max_len=None, gap=0, font=Font, rota
         msg_rect_obj = msg_surface_obj.get_rect()
         a, b = msg_surface_obj.get_size()
         if alignment[0] == "centre":
-            new_x = x - a / 2
+            new_x = x - a // 2
         elif alignment[0] == "right":
             new_x = x - a
         else:
             new_x = x
         if alignment[1] == "centre":
-            new_y = y - b / 2
+            new_y = y - b // 2
         elif alignment[1] == "bottom":
             new_y = y - b
         else:
@@ -561,9 +562,3 @@ def quit_game():
     pygame.quit()
     import sys
     sys.exit(0)
-
-
-def get_square(x, y, board):
-    a = min(x // board.Size, board.Width) + board.Cushion
-    b = min(y // board.Size, board.Height) + board.Cushion
-    return a, b
