@@ -57,11 +57,12 @@ G_Colour = {"Player1": (0, 255, 100),  # (0, 255, 100) # The colour of Player 1'
             "Player4": (0, 0, 0),  # (0, 0, 0) # The colour of  Player 4's cells
             "Dead": (255, 255, 255),  # (255, 255, 255) # The colour of dead cells
             "Highlighter": (0, 255, 100),  # (0, 255, 100) # The colour of the button when your mouse is hovering over it
+            "Unselectable": (200, 200, 200),  # (200, 200, 200) # The colour of a button that is not clickable
             "Background": (120, 120, 120),  # (120, 120, 120) # The colour of the background
             "Text": (255, 255, 255),  # (255, 255, 255) # The colour of the text
             "ButtonBorder": (255, 255, 255)}  # (255, 255, 255) # The colour of the border of the button
-G_PartImmuneTime = 3  # 3 # The number of turns a cell has to be alive before it becomes immune (doesn't die unless your opponent kills it)
-G_FullImmuneTime = 5  # 5 # The number of turns a cell has to be alive before it becomes immune (nothing can kill it except you)
+G_PartImmuneTime = 3  # 3 # The number of turns a cell has to be alive before it becomes part immune (doesn't die unless your opponent kills it)
+G_FullImmuneTime = 5  # 5 # The number of turns a cell has to be alive before it becomes fully immune (nothing can kill it except you)
 
 ##HELP SCREEN
 H_SectionGapSize = 5  # 5 # The size of the gap between the 2 sections of text

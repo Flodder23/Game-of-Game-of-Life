@@ -227,10 +227,7 @@ class Board:
                     if fate == set_up.Dead:
                         self.Cell[a][b].kill()
                     else:
-                        if player == 0:
-                            self.Cell[a][b].birth(fate, 0)
-                        else:
-                            self.Cell[a][b].birth(fate, player)
+                        self.Cell[a][b].birth(fate, player)
     
     def place_preset(self, screen, preset_no, a, b):
         if self.Wrap:
@@ -255,19 +252,25 @@ class Board:
         self.__init__(state, players=self.Players)
         self.update()
     
-    def show_future(self, screen, actions, player, smaller=True):
+    def show_future(self, screen, actions, player, smaller=True, immunity=True):
         temp_board = copy.deepcopy(self)
-        for action in actions:
-            if action[2]:
-                temp_board.Cell[action[0]][action[1]].kill()
-            else:
-                temp_board.Cell[action[0]][action[1]].birth(set_up.Square, player)
-            temp_board.Cell[action[0]][action[1]].update()
+        temp_board.impose_turns(actions, player)
         temp_board.draw(screen, update_display=False)
         if smaller:
             temp_board.take_turn()
-            temp_board.update()
+            temp_board.update(immunity=immunity)
             temp_board.draw(screen, preview=True)
 
     def get_square(self, x, y):
         return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion
+    
+    def impose_turns(self, turns, player_no):
+        for action in turns:
+            if action[2]:
+                self.Cell[action[0]][action[1]].kill()
+            else:
+                self.Cell[action[0]][action[1]].birth(set_up.Square, player_no)
+            self.Cell[action[0]][action[1]].update()
+            if len(action) == 4:
+                self.take_turn()
+                self.update(immunity=True)

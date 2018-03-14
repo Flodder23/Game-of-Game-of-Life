@@ -250,15 +250,8 @@ class Game:
                 self.Players[self.CurrentPlayer - 1].SpareTurns -= 1
                 break
             else:
-                for action in turn:
-                    if action[2]:
-                        board.Cell[action[0]][action[1]].kill()
-                    else:
-                        board.Cell[action[0]][action[1]].birth(Square, self.CurrentPlayer)
-                    board.Cell[action[0]][action[1]].update()
-                    self.Players[self.CurrentPlayer - 1].SpareTurns -= 1
-                board.take_turn()
-                board.update(immunity=True)
+                board.impose_turns(turn, self.CurrentPlayer)
+                self.Players[self.CurrentPlayer - 1].SpareTurns -= len(turn)
                 screen.fill(self.Colour["Background"])
                 board.draw(screen)
             if self.CurrentPlayer == self.NoOfPlayers:
@@ -273,16 +266,20 @@ class Game:
         pygame.display.update()
         held_down = {"mouse0": True, "mouse2": False, "esc": False, "space": True, "f": False}
         show_future = True
-        button_text = "Skip Turn"
         turns_used = [0 for _ in range(self.NoOfPlayers)]
+        generated = False
         while not turn_chosen:
             events = pygame.event.get()
             if check_quit(events) and not held_down["esc"]:  # if ESC is pressed
                 if len(turn) == 0:
                     return "Go Back"
                 else:
-                    del turn[-1]
-                    turns_used[player_no - 1] -= 1
+                    if len(turn[-1]) == 4:
+                        del turn[-1][-1]
+                        generated = False
+                    else:
+                        del turn[-1]
+                        turns_used[player_no - 1] -= 1
                 held_down["esc"] = True
             else:
                 held_down["esc"] = False
@@ -297,21 +294,25 @@ class Game:
                         kill = True
                 if kill is not None:
                     turn.append([a, b, kill])
-                    button_text = "Take Turn"
                     turns_used[player_no - 1] += 1
             if pygame.key.get_pressed()[pygame.K_SPACE] and not held_down["space"]:
                 turn_chosen = True
             if pygame.key.get_pressed()[pygame.K_f] and not held_down["f"]:
                 show_future = not show_future
-            on_button = False
+            on_button = [False, False]
             if 2 * self.ButtonBorderSize < screen.get_width() - x < self.RightColumnSize - 2 * self.ButtonBorderSize:
-                if 0 < screen.get_height() - y - 2 * self.ButtonBorderSize < self.ButtonHeight:
+                if 0 < screen.get_height() - y - self.ButtonBorderSize < self.ButtonHeight:
                     if pygame.mouse.get_pressed()[0] and not held_down["mouse0"]:
                         turn_chosen = True
-                    on_button = True
+                    on_button[0] = True
+                elif 0 > y - screen.get_height() + 3 * self.ButtonBorderSize + self.ButtonHeight > -self.ButtonHeight:
+                    if pygame.mouse.get_pressed()[0] and not generated:
+                        generated = True
+                        turn[-1].append("Generate")
+                    on_button[1] = True
             
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), on_button,
-                                   button_text, turns_used)
+                                   turns_used, generated)
             board.show_future(screen, turn, player_no, smaller=show_future)
             held_down["mouse0"] = pygame.mouse.get_pressed()[0]
             held_down["mouse2"] = pygame.mouse.get_pressed()[2]
@@ -323,12 +324,7 @@ class Game:
     @staticmethod
     def check_turn_is_valid(board, turns, player_no, a, b, kill):
         temp_board = copy.deepcopy(board)
-        for action in turns:
-            if action[2]:
-                temp_board.Cell[action[0]][action[1]].kill()
-            else:
-                temp_board.Cell[action[0]][action[1]].birth(Square, player_no)
-            temp_board.Cell[action[0]][action[1]].update()
+        temp_board.impose_turns(turns, player_no)
         if temp_board.Cell[a][b].CurrentPlayer == player_no:
             return kill
         elif temp_board.Cell[a][b].CurrentState == Dead:
@@ -358,31 +354,41 @@ class Game:
                     player_scores[temp_board.Cell[a][b].CurrentPlayer] += 1
         return player_scores
     
-    def draw_right_column(self, screen, player_scores, on_button, button_text, turns_used):
+    def draw_right_column(self, screen, player_scores, on_button, turns_used, generated):
         pygame.draw.rect(screen, self.Colour["Background"], (screen.get_width() - self.RightColumnSize, 0,
                                                              self.RightColumnSize, screen.get_height()))
         
         write(screen, screen.get_width() - self.RightColumnSize // 2, self.ButtonBorderSize,
               self.PlayerNames[self.CurrentPlayer - 1] + "'s turn", self.Colour["Player" + str(self.CurrentPlayer)],
               self.TextSize, max_len=self.RightColumnSize, alignment=("centre", "top"))
-        pygame.draw.rect(screen, self.Colour["ButtonBorder"],
-                         (screen.get_width() - self.RightColumnSize + self.ButtonBorderSize,
-                          screen.get_height() - self.ButtonBorderSize - self.ButtonHeight,
-                          self.RightColumnSize - 2 * self.ButtonBorderSize, self.ButtonHeight))
-        pygame.draw.rect(screen, self.Colour["Background"],
-                         (screen.get_width() - self.RightColumnSize + 2 * self.ButtonBorderSize,
-                          screen.get_height() - self.ButtonHeight,
-                          self.RightColumnSize - 4 * self.ButtonBorderSize,
-                          self.ButtonHeight - 2 * self.ButtonBorderSize))
-        if on_button:
-            button_colour = self.Colour["Highlighter"]
+        button_centres = [[screen.get_width() - self.RightColumnSize // 2,
+                           screen.get_height() - 2 * self.ButtonBorderSize - self.ButtonHeight // 2
+                           - a * (self.ButtonHeight + 2 * self.ButtonBorderSize)] for a in range(2)]
+        for a in range(2):
+            pygame.draw.rect(screen, self.Colour["ButtonBorder"],
+                             (button_centres[a][0] - self.RightColumnSize // 2 + self.ButtonBorderSize,
+                              button_centres[a][1] - self.ButtonHeight // 2 + self.ButtonBorderSize,
+                              self.RightColumnSize - 2 * self.ButtonBorderSize, self.ButtonHeight))
+            pygame.draw.rect(screen, self.Colour["Background"],
+                             (button_centres[a][0] - self.RightColumnSize // 2 + 2 * self.ButtonBorderSize,
+                              button_centres[a][1] - self.ButtonHeight // 2 + 2 * self.ButtonBorderSize,
+                              self.RightColumnSize - 4 * self.ButtonBorderSize,
+                              self.ButtonHeight - self.ButtonBorderSize - 2))
+        button_colours = [self.Colour["Text"] for _ in range(2)]
+        if on_button[0]:
+            button_colours[0] = self.Colour["Highlighter"]
+        if generated:
+            button_colours[1] = self.Colour["Unselectable"]
         else:
-            button_colour = self.Colour["Text"]
-        write(screen, screen.get_width() - self.RightColumnSize // 2,
-              screen.get_height() - self.ButtonBorderSize - self.ButtonHeight // 2, button_text,
-              button_colour, self.TextSize, max_len=self.RightColumnSize, alignment=("centre", "centre"))
-        bottom = [screen.get_width() - self.RightColumnSize + self.ButtonBorderSize,
-                  screen.get_height() - 2 * self.ButtonBorderSize - self.ButtonHeight]
+            if on_button[1]:
+                button_colours[1] = self.Colour["Highlighter"]
+            
+        button_text = ("End Turn", "Generate")
+        for a in range(2):
+            write(screen, button_centres[a][0], button_centres[a][1], button_text[a], button_colours[a], self.TextSize,
+                  max_len=self.RightColumnSize, alignment=("centre", "centre"))
+        bottom = (screen.get_width() - self.RightColumnSize + self.ButtonBorderSize,
+                  button_centres[-1][1] - self.ButtonBorderSize - self.ButtonHeight // 2)
         extra_space = 0
         for n in [self.NoOfPlayers - a - 1 for a in range(self.NoOfPlayers)]:
             col = self.Players[n].Colour
@@ -473,7 +479,7 @@ class Help:
         help_rect = help_surface.get_rect()
         text_range = (self.SectionGapSize, help_surface.get_height() - self.Height + 2 * self.SectionGapSize)
         top_y = text_range[0] - (text_range[1] - text_range[0]) * (slider_centre - slider_range[0]) // (slider_range[1]
-                                                                                                       - slider_range[0])
+                                                                                                        - slider_range[0])
         help_rect.topleft = (int((self.Width - self.SliderWidth) // 2) + self.SliderGapSize, top_y)
         screen.blit(help_surface, help_rect)
         pygame.display.update()
