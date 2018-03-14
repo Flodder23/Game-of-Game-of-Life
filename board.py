@@ -29,6 +29,8 @@ class Cell:
     def birth(self, state, player):
         self.NextState = state
         self.NextPlayer = player
+        self.FullImmune = False
+        self.PartImmune = False
     
     def draw(self, screen, size, board):
         x, y = self.Coordinates
@@ -50,7 +52,7 @@ class Cell:
     def update(self, board=None, immunity=False):
         self.CurrentState = self.NextState
         self.CurrentPlayer = self.NextPlayer
-        if immunity and not self.FullImmune:
+        if immunity and not self.FullImmune and not self.CurrentState == set_up.Dead:
             if self.AliveFor >= board.FullImmuneTime:
                 self.FullImmune = True
             elif self.AliveFor >= board.PartImmuneTime:
