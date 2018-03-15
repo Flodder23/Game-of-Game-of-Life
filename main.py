@@ -25,7 +25,10 @@ while MenuChoice in (Menu.Buttons[:3]):
     if MenuChoice == Menu.Buttons[0]:
         Sim.run(Screen, SimBoard)
     elif MenuChoice == Menu.Buttons[1]:
-        Game.run(Screen, GameBoard)
+        if Game.run(Screen, GameBoard):
+            Game = set_up.Game()
+            GameBoard = board.Board(Game, players=True)
+            GameBoard.set_up(Game.SetUpChances, rotational_symmetry=Game.NoOfPlayers)
     elif MenuChoice == Menu.Buttons[2]:
         Help.display(Screen)
     MenuChoice = Menu.get_choice(Screen)

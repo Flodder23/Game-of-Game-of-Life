@@ -51,6 +51,8 @@ G_TextSize = 32  # 32 # The size of the text
 G_RightColumnSize = 150  # 150 # The size of the column on the right
 G_ButtonHeight = 50  # 50 # The height of the button
 G_ButtonBorderSize = 3  # 3 # The size of the border of the button
+G_WinMessageWidth = 500  # 500 # The width of the win message
+G_WinMessageHeight = 300  # 300 # The height of the win message
 G_Colour = {"Player1": (0, 255, 100),  # (0, 255, 100) # The colour of Player 1's cells
             "Player2": (0, 100, 255),  # (0, 100, 255) # The colour of Player 2's cells
             "Player3": (255, 100, 0),  # (255, 100, 0) # The colour of  Player 3's cells
@@ -62,7 +64,15 @@ G_Colour = {"Player1": (0, 255, 100),  # (0, 255, 100) # The colour of Player 1'
             "Text": (255, 255, 255),  # (255, 255, 255) # The colour of the text
             "ButtonBorder": (255, 255, 255)}  # (255, 255, 255) # The colour of the border of the button
 G_PartImmuneTime = 3  # 3 # The number of turns a cell has to be alive before it becomes part immune (doesn't die unless your opponent kills it)
-G_FullImmuneTime = 5  # 5 # The number of turns a cell has to be alive before it becomes fully immune (nothing can kill it except you)
+G_FullImmuneTime = 5  # 5 # The number of turns a cell has to be alive before it becomes fully immune (nothing can kill it except you) Must be be bigger than G_PartImmuneTime
+G_IsTurnLimit = True  # True # Whether there is a limit on the amount of turns in a game
+G_TurnLimit = 30  # 30 # The amount of turns each player can have before the game ends
+G_IsGenLimit = False  # False # Whether there is a limit on the amount of generations in a game
+G_GenLimit = 15  # 15 # THe amount of gens in total before the game ends
+G_BoardAmountWin = True  # True # Whether the game ends when a player gets a certain amount of the board
+G_BoardAmount = 0.3  # 0.3 # The amount of the board a player must get to win; an amount between 0 and 1
+G_PlayerAmountWin = True  # Whether the game ends when a player has a certain amount of cells more than the opponent
+G_PlayerAmount = 0.25  # 0.25 # If the number of cells a player has timesed by the number is bigger than the other's, the first player wins.
 
 ##HELP SCREEN
 H_SectionGapSize = 5  # 5 # The size of the gap between the 2 sections of text

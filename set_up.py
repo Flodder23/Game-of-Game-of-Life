@@ -221,6 +221,8 @@ class Game:
         self.CellGap = config.G_CellGap
         self.Wrap = True
         self.Cushion = 0
+        self.Turns = 0
+        self.Gens = 0
         self.NoOfPlayers = config.G_NoOfPlayers
         self.PlayerNames = config.G_PlayerNames[:self.NoOfPlayers]
         self.PreviewSize = config.G_PreviewSize
@@ -229,10 +231,20 @@ class Game:
         self.RightColumnSize = config.G_RightColumnSize
         self.ButtonHeight = config.G_ButtonHeight
         self.ButtonBorderSize = config.G_ButtonBorderSize
+        self.WinMessageWidth = config.G_WinMessageWidth
+        self.WinMessageHeight = config.G_WinMessageHeight
         self.PartImmuneTime = 3
         self.FullImmuneTime = 5
         self.Colour = config.G_Colour
         self.CurrentPlayer = 1
+        self.IsTurnLimit = config.G_IsTurnLimit
+        self.TurnLimit = config.G_TurnLimit
+        self.IsGenLimit = config.G_IsGenLimit
+        self.GenLimit = config.G_GenLimit
+        self.BoardAmountWin = config.G_BoardAmountWin
+        self.BoardAmount = config.G_BoardAmount
+        self.PlayerAmountWin = config.G_PlayerAmountWin
+        self.PlayerAmount = config.G_PlayerAmount
         self.Players = [Player(n, self.Colour["Player" + str(n)]) for n in range(1, self.NoOfPlayers + 1)]
     
     def run(self, screen, board):
@@ -248,16 +260,44 @@ class Game:
             turn = self.take_turn(screen, board, self.CurrentPlayer)
             if turn == "Go Back":
                 self.Players[self.CurrentPlayer - 1].SpareTurns -= 1
-                break
+                return False
             else:
                 board.impose_turns(turn, self.CurrentPlayer)
                 self.Players[self.CurrentPlayer - 1].SpareTurns -= len(turn[1])
                 screen.fill(self.Colour["Background"])
                 board.draw(screen)
+            if turn[0] is not None:
+                self.Gens += 1
             if self.CurrentPlayer == self.NoOfPlayers:
                 self.CurrentPlayer = 1
+                self.Turns += 1
             else:
                 self.CurrentPlayer += 1
+            win = self.check_for_wins(board, self.Turns, self.Gens)
+            if win is not None:
+                if win[0].startswith("T"):
+                    win_message = "Turn limit reached.Player " + str(win[1]) + " wins!"
+                elif win[0].startswith("G"):
+                    win_message = "Generation limit reached.Player " + str(win[1]) + " wins!"
+                elif win[0].startswith("S"):
+                    win_message = "Player " + str(win[1]) + " got enough points to win!"
+                else:
+                    win_message = "Player " + str(win[1]) + " got more cells than the other player by enough to win"
+                pygame.draw.rect(screen, (self.Colour["Highlighter"]),
+                                 ((screen.get_width() - self.WinMessageWidth) // 2 - self.ButtonBorderSize,
+                                  (screen.get_height() - self.WinMessageHeight) // 2 - self.ButtonBorderSize,
+                                  self.WinMessageWidth + 2 * self.ButtonBorderSize,
+                                  self.WinMessageHeight + 2 * self.ButtonBorderSize))
+                pygame.draw.rect(screen, (self.Colour["Background"]),
+                                 ((screen.get_width() - self.WinMessageWidth) // 2,
+                                  (screen.get_height() - self.WinMessageHeight) // 2,
+                                  self.WinMessageWidth, self.WinMessageHeight))
+                write(screen, screen.get_width() // 2, screen.get_height() // 2, win_message, self.Colour["Text"],
+                      self.TextSize, max_len=self.WinMessageWidth, alignment=("centre", "centre"))
+                pygame.display.update()
+                while True:
+                    if check_quit(pygame.event.get()):
+                        return True
     
     def take_turn(self, screen, board, player_no):
         turn_chosen = False
@@ -330,7 +370,7 @@ class Game:
             if temp_board.Cell[a][b].FullImmune:
                 return False
             else:
-                return True
+                return kill
     
     def get_player_scores(self, board, turns=None, player_no=0):
         player_scores = [0 for _ in range(self.NoOfPlayers + 1)]
@@ -393,7 +433,21 @@ class Game:
             extra_space += write(screen, bottom[0], bottom[1] - extra_space, self.PlayerNames[n], col,
                                  int(self.TextSize / 1.2),
                                  max_len=self.RightColumnSize - 2 * self.ButtonBorderSize, alignment=("left", "bottom"))
-
+    
+    def check_for_wins(self, board, turns, generations):
+        player_scores = self.get_player_scores(board)
+        del player_scores[0]
+        for a in range(len(player_scores)):
+            if self.BoardAmountWin and player_scores[a] > self.Height * self.Width * self.BoardAmount:
+                return "Board Amount Passed", a + 1
+            for b in range(len(player_scores)):
+                if self.IsTurnLimit and turns >= self.TurnLimit:
+                    return "Turn Limit Reached", player_scores.index(max(player_scores)) + 1
+                if self.IsGenLimit and generations >= self.GenLimit:
+                    return "Generation Limit Reached", player_scores.index(max(player_scores)) + 1
+                if self.PlayerAmountWin and player_scores[a] * self.PlayerAmount > player_scores[b]:
+                    return "Score Difference Passed", a + 1
+                
 
 class Help:
     def __init__(self):
