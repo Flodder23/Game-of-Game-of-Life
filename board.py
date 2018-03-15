@@ -265,12 +265,15 @@ class Board:
         return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion
     
     def impose_turns(self, turns, player_no):
-        for action in turns:
-            if action[2]:
-                self.Cell[action[0]][action[1]].kill()
-            else:
-                self.Cell[action[0]][action[1]].birth(set_up.Square, player_no)
-            self.Cell[action[0]][action[1]].update()
-            if len(action) == 4:
+        for a in range(len(turns[1])):
+            if turns[0] == a:
                 self.take_turn()
                 self.update(immunity=True)
+            if turns[1][a][2]:
+                self.Cell[turns[1][a][0]][turns[1][a][1]].kill()
+            else:
+                self.Cell[turns[1][a][0]][turns[1][a][1]].birth(set_up.Square, player_no)
+            self.Cell[turns[1][a][0]][turns[1][a][1]].update()
+        if turns[0] == len(turns[1]):
+            self.take_turn()
+            self.update(immunity=True)

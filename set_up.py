@@ -251,7 +251,7 @@ class Game:
                 break
             else:
                 board.impose_turns(turn, self.CurrentPlayer)
-                self.Players[self.CurrentPlayer - 1].SpareTurns -= len(turn)
+                self.Players[self.CurrentPlayer - 1].SpareTurns -= len(turn[1])
                 screen.fill(self.Colour["Background"])
                 board.draw(screen)
             if self.CurrentPlayer == self.NoOfPlayers:
@@ -262,23 +262,21 @@ class Game:
     def take_turn(self, screen, board, player_no):
         turn_chosen = False
         board.draw(screen)
-        turn = []
+        turn = [None, []]
         pygame.display.update()
         held_down = {"mouse0": True, "mouse2": False, "esc": False, "space": True, "f": False}
         show_future = True
         turns_used = [0 for _ in range(self.NoOfPlayers)]
-        generated = False
         while not turn_chosen:
             events = pygame.event.get()
             if check_quit(events) and not held_down["esc"]:  # if ESC is pressed
-                if len(turn) == 0:
+                if len(turn[1]) == 0 and turn[0] is None:
                     return "Go Back"
                 else:
-                    if len(turn[-1]) == 4:
-                        del turn[-1][-1]
-                        generated = False
+                    if turn[0] == len(turn[1]):
+                        turn[0] = None
                     else:
-                        del turn[-1]
+                        del turn[1][-1]
                         turns_used[player_no - 1] -= 1
                 held_down["esc"] = True
             else:
@@ -287,13 +285,13 @@ class Game:
             a, b = board.get_square(x, y)
             if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
                 kill = None
-                if len(turn) < self.Players[player_no - 1].SpareTurns and not (held_down["mouse0"] or held_down["mouse2"]):
+                if len(turn[1]) < self.Players[player_no - 1].SpareTurns and not (held_down["mouse0"] or held_down["mouse2"]):
                     if pygame.mouse.get_pressed()[0] and self.check_turn_is_valid(board, turn, player_no, a, b, False):
                         kill = False
                     elif pygame.mouse.get_pressed()[2] and self.check_turn_is_valid(board, turn, player_no, a, b, True):
                         kill = True
                 if kill is not None:
-                    turn.append([a, b, kill])
+                    turn[1].append([a, b, kill])
                     turns_used[player_no - 1] += 1
             if pygame.key.get_pressed()[pygame.K_SPACE] and not held_down["space"]:
                 turn_chosen = True
@@ -306,13 +304,12 @@ class Game:
                         turn_chosen = True
                     on_button[0] = True
                 elif 0 > y - screen.get_height() + 3 * self.ButtonBorderSize + self.ButtonHeight > -self.ButtonHeight:
-                    if pygame.mouse.get_pressed()[0] and not generated:
-                        generated = True
-                        turn[-1].append("Generate")
+                    if pygame.mouse.get_pressed()[0] and turn[0] is None:
+                        turn[0] = len(turn[1])
                     on_button[1] = True
             
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), on_button,
-                                   turns_used, generated)
+                                   turns_used, not turn[0] is None)
             board.show_future(screen, turn, player_no, smaller=show_future)
             held_down["mouse0"] = pygame.mouse.get_pressed()[0]
             held_down["mouse2"] = pygame.mouse.get_pressed()[2]
@@ -343,12 +340,7 @@ class Game:
                     player_scores[board.Cell[a][b].CurrentPlayer] += 1
         else:
             temp_board = copy.deepcopy(board)
-            for action in turns:
-                if action[2]:
-                    temp_board.Cell[action[0]][action[1]].kill()
-                else:
-                    temp_board.Cell[action[0]][action[1]].birth(Square, player_no)
-                temp_board.Cell[action[0]][action[1]].update()
+            temp_board.impose_turns(turns, player_no)
             for a in range(self.Width):
                 for b in range(self.Height):
                     player_scores[temp_board.Cell[a][b].CurrentPlayer] += 1
