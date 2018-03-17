@@ -196,8 +196,8 @@ class Sim:
         pygame.draw.line(screen, self.Colour["Text"], (self.SliderY, self.StartOfSlider), (self.SliderY, self.EndOfSlider))
         for n in range(self.NoOfNotches):
             pygame.draw.line(screen, self.Colour["Text"], (self.SliderY - self.NotchLength // 2,
-                                                           self.StartOfSlider + n * self.SpaceBetweenNotches),
-                             (self.SliderY + self.NotchLength // 2, self.StartOfSlider + n * self.SpaceBetweenNotches))
+                                                           self.StartOfSlider + int(n * self.SpaceBetweenNotches)),
+                             (self.SliderY + self.NotchLength // 2, self.StartOfSlider + int(n * self.SpaceBetweenNotches)))
         write(screen, (self.Size * self.Width + self.SliderY - self.NotchLength) // 2,
               (self.StartOfSlider + self.EndOfSlider) // 2, "Speed", self.Colour["Text"], self.SpeedSize,
               rotate=90, alignment=("centre", "centre"))
