@@ -74,9 +74,9 @@ class Cell:
         ar = a + 1  # a right
         bu = b - 1  # b up
         bd = b + 1  # b down
-        if board.Wrap and a == board.Width - 1:
+        if board.Wrap and a == board.Width + 2 * board.Cushion - 1:
             ar = 0
-        if board.Wrap and b == board.Height - 1:
+        if board.Wrap and b == board.Height + 2 * board.Cushion - 1:
             bd = 0
         total[board.Cell[al][b].CurrentState] += 1
         player[board.Cell[al][b].CurrentPlayer] += 1
@@ -240,10 +240,10 @@ class Board:
         for c in range(len(shape)):
             for d in range(len(shape[c])):
                 if self.Wrap:
-                    if a + c >= self.Width:
-                        a -= self.Width
-                    if b + d >= self.Height:
-                        b -= self.Height
+                    if a + c >= self.Width + 2 * self.Cushion:
+                        a -= self.Width + 2 * self.Cushion
+                    if b + d >= self.Height + 2 * self.Cushion:
+                        b -= self.Height + 2 * self.Cushion
                 if shape[c][d] == 0:
                     self.Cell[a + c][b + d].kill()
                 else:
