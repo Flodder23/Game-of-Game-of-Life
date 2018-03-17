@@ -10,11 +10,11 @@ Square = 1
 
 
 class Player:
-    def __init__(self, number, colour):
+    def __init__(self, number, colour, starting_turns):
         self.Number = number
         self.Colour = colour
         self.NoOfCells = 0
-        self.SpareTurns = 0
+        self.SpareTurns = starting_turns
 
 
 class Menu:
@@ -108,6 +108,7 @@ class Sim:
         self.Colour = config.S_Colour
     
     def run(self, screen, board):
+        pygame.display.set_caption("Game of Life")
         pygame.display.set_mode((board.Size * board.Width + self.SliderSize, board.Size * board.Height))
         screen.fill(self.Colour["Background"])
         self.draw_gps_slider(screen, ((maths.log(self.GPS, 10) + 1) // -3)
@@ -122,7 +123,7 @@ class Sim:
                     or (self.Paused and self.OneTurn):
                 if self.OneTurn:
                     self.OneTurn = False
-                board.take_turn()
+                board.take_turn(update_caption=True)
                 board.update()
                 board.Generations += 1
                 board.draw(screen)
@@ -247,18 +248,37 @@ class Game:
         self.BoardAmount = config.G_BoardAmount
         self.PlayerAmountWin = config.G_PlayerAmountWin
         self.PlayerAmount = config.G_PlayerAmount
-        self.Players = [Player(n, self.Colour["Player" + str(n)]) for n in range(1, self.NoOfPlayers + 1)]
+        self.StartingTurns = config.G_StartingTurns
+        self.FairerTurns = config.G_FairerTurns
+        self.Players = [Player(n, self.Colour["Player" + str(n)], self.StartingTurns) for n in range(1, self.NoOfPlayers + 1)]
     
     def run(self, screen, board):
         board.update()
         board.draw(screen)
         screen = pygame.display.set_mode((board.Size * board.Width + self.RightColumnSize, board.Size * board.Height))
         screen.fill(self.Colour["Background"])
+        if self.FairerTurns:
+            turns_added = 2
+            for p in range(self.NoOfPlayers // 2):
+                self.Players[p].SpareTurns -= 1
+        else:
+            turns_added = 1
+        for player in self.Players:
+            player.SpareTurns -= turns_added
         while True:
+            gen_text = "Generations: " + str(self.Gens)
+            if self.IsGenLimit:
+                 gen_text += " (%s)" % str(self.GenLimit)
+            turn_text = "Turns: " + str(self.Turns)
+            if self.IsTurnLimit:
+                turn_text += " (%s)" % str(self.TurnLimit)
+            if self.BoardAmountWin:
+                turn_text += " Cells needed to win: " + str(maths.floor(self.BoardAmount * self.Width * self.Height))
+            pygame.display.set_caption("Game of Life - Game - " + gen_text + " " + turn_text)
             player_scores = self.get_player_scores(board)
             for p in range(self.NoOfPlayers):
                 self.Players[p].NoOfCells = player_scores[p + 1]
-            self.Players[self.CurrentPlayer - 1].SpareTurns += 1
+            self.Players[self.CurrentPlayer - 1].SpareTurns += turns_added
             turn = self.take_turn(screen, board, self.CurrentPlayer)
             if turn == "Go Back":
                 self.Players[self.CurrentPlayer - 1].SpareTurns -= 1

@@ -145,7 +145,6 @@ class Board:
             self.FullImmuneTime = state.FullImmuneTime
         self.Cell = [[Cell(a, b, set_up.Square, set_up.Dead, self, 0) for b in range(
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
-        pygame.display.set_caption("Game of Life - Generation 0")
     
     def set_up(self, chances, rotational_symmetry=None):
         width = self.Width
@@ -216,9 +215,10 @@ class Board:
             for b in range(self.Height + 2 * self.Cushion):
                 self.Cell[a][b].update(board=self, immunity=immunity)
     
-    def take_turn(self):
+    def take_turn(self, update_caption=False):
         """Changes the NextState variables & updates display caption"""
-        pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
+        if update_caption:
+            pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
         if self.Wrap:
             cushion = 0
         else:

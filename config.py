@@ -66,13 +66,15 @@ G_Colour = {"Player1": (150, 205, 80),  # (150, 205, 80) # The colour of Player 
 G_PartImmuneTime = 4  # 4 # The number of turns a cell has to be alive before it becomes part immune (doesn't die unless your opponent kills it)
 G_FullImmuneTime = 8  # 8 # The number of turns a cell has to be alive before it becomes fully immune (nothing can kill it except you) Must be be bigger than G_PartImmuneTime
 G_IsTurnLimit = True  # True # Whether there is a limit on the amount of turns in a game
-G_TurnLimit = 30  # 30 # The amount of turns each player can have before the game ends
+G_TurnLimit = 20  # 30 # The amount of turns each player can have before the game ends
 G_IsGenLimit = False  # False # Whether there is a limit on the amount of generations in a game
-G_GenLimit = 15  # 15 # THe amount of gens in total before the game ends
+G_GenLimit = 10  # 15 # THe amount of gens in total before the game ends
 G_BoardAmountWin = True  # True # Whether the game ends when a player gets a certain amount of the board
 G_BoardAmount = 0.3  # 0.3 # The amount of the board a player must get to win; an amount between 0 and 1
 G_PlayerAmountWin = True  # True # Whether the game ends when a player has a certain amount of cells more than the opponent
 G_PlayerAmount = 0.25  # 0.25 # If the number of cells a player has timesed by the number is bigger than the other's, the first player wins.
+G_StartingTurns = 3  # 3 # The amount of turns each player starts with. Should be integer bigger than 0. if FairerTurns is True, it should be bigger than 1.
+G_FairerTurns = True  # True # if this is True, instead of taking it in turns to go, the players will have 2 turns each in a row, with the first player starting with only one turn but gettting 2 after that.
 
 ##HELP SCREEN
 H_SectionGapSize = 5  # 5 # The size of the gap between the 2 sections of text
