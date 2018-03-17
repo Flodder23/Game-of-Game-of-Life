@@ -89,8 +89,9 @@ class Sim:
         self.NoOfNotches = config.S_NoOfNotches
         self.NotchLength = config.S_NotchLength
         self.StartOfSlider = 2 * self.NotchLength
+        self.SpeedSize = config.S_SpeedSize
         self.EndOfSlider = self.Height * self.Size - self.HighlightSize - self.NotchLength
-        self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) // (self.NoOfNotches - 1)
+        self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) / (self.NoOfNotches - 1)
         self.SliderY = self.Size * self.Width + self.CellGap // 2 + self.SliderSize // 2
         self.ButtonStart = self.Size * self.Width
         
@@ -197,8 +198,9 @@ class Sim:
             pygame.draw.line(screen, self.Colour["Text"], (self.SliderY - self.NotchLength // 2,
                                                            self.StartOfSlider + n * self.SpaceBetweenNotches),
                              (self.SliderY + self.NotchLength // 2, self.StartOfSlider + n * self.SpaceBetweenNotches))
-        write(screen, self.SliderY - (12 + self.NotchLength), (self.StartOfSlider + self.EndOfSlider) * 0.5, "Speed",
-              self.Colour["Text"], 20, rotate=90, alignment=("left", "centre"))
+        write(screen, (self.Size * self.Width + self.SliderY - self.NotchLength) // 2,
+              (self.StartOfSlider + self.EndOfSlider) // 2, "Speed", self.Colour["Text"], self.SpeedSize,
+              rotate=90, alignment=("centre", "centre"))
         if gps_limit:
             colour = "Highlighter"
         else:
@@ -312,7 +314,6 @@ class Game:
         turn_chosen = False
         board.draw(screen)
         turn = [None, []]
-        pygame.display.update()
         held_down = {"mouse0": True, "mouse2": False, "esc": False, "space": True, "f": False, "j": False}
         show_future = True
         show_alive_for = False
@@ -363,7 +364,7 @@ class Game:
                     on_button[1] = True
             
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), on_button,
-                                   turns_used, not turn[0] is None)
+                                   turns_used, not turn[0] is None, update=False)
             if show_alive_for:
                 board.show_alive(screen, self.TextSize,self.Colour)
             else:
@@ -404,7 +405,7 @@ class Game:
                     player_scores[temp_board.Cell[a][b].CurrentPlayer] += 1
         return player_scores
     
-    def draw_right_column(self, screen, player_scores, on_button, turns_used, generated, clickable=None):
+    def draw_right_column(self, screen, player_scores, on_button, turns_used, generated, clickable=None, update=True):
         pygame.draw.rect(screen, self.Colour["Background"], (screen.get_width() - self.RightColumnSize, 0,
                                                              self.RightColumnSize, screen.get_height()))
         
@@ -454,6 +455,8 @@ class Game:
             extra_space += write(screen, bottom[0], bottom[1] - extra_space, self.PlayerNames[n], col,
                                  int(self.TextSize / 1.2),
                                  max_len=self.RightColumnSize - 2 * self.ButtonBorderSize, alignment=("left", "bottom"))
+        if update:
+            pygame.display.update()
     
     def check_for_wins(self, board, turns, generations):
         player_scores = self.get_player_scores(board)
@@ -490,8 +493,7 @@ class Help:
         pygame.display.set_mode((self.Width, self.Surfaces[0].get_height()))
         screen.fill(self.Colour["Background"])
         self.Height = screen.get_height()
-        slider_range = (
-            self.SliderGapSize + self.SliderLength // 2, self.Height - self.SliderGapSize - self.SliderLength // 2)
+        slider_range = (self.SliderGapSize + self.SliderLength // 2, self.Height - self.SliderGapSize - self.SliderLength // 2)
         slider_centre = slider_range[0]
         help_rect = self.Surfaces[0].get_rect()
         help_rect.topleft = (self.SectionGapSize, self.SectionGapSize)
