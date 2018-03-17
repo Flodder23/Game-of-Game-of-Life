@@ -233,8 +233,8 @@ class Game:
         self.ButtonBorderSize = config.G_ButtonBorderSize
         self.WinMessageWidth = config.G_WinMessageWidth
         self.WinMessageHeight = config.G_WinMessageHeight
-        self.PartImmuneTime = 3
-        self.FullImmuneTime = 5
+        self.PartImmuneTime = config.G_PartImmuneTime
+        self.FullImmuneTime = config.G_FullImmuneTime
         self.Colour = config.G_Colour
         self.CurrentPlayer = 1
         self.IsTurnLimit = config.G_IsTurnLimit
@@ -295,17 +295,27 @@ class Game:
                 write(screen, screen.get_width() // 2, screen.get_height() // 2, win_message, self.Colour["Text"],
                       self.TextSize, max_len=self.WinMessageWidth, alignment=("centre", "centre"))
                 pygame.display.update()
+                board_view = False
                 while True:
                     if check_quit(pygame.event.get()):
-                        return True
+                        if board_view:
+                            return True
+                        else:
+                            board_view = True
+                            screen.fill(self.Colour["Background"])
+                            board.draw(screen)
+                            self.draw_right_column(screen, self.get_player_scores(board), (False, False), (0, 0, 0, 0), 0,
+                                                   clickable=False)
+                            pygame.display.update()
     
     def take_turn(self, screen, board, player_no):
         turn_chosen = False
         board.draw(screen)
         turn = [None, []]
         pygame.display.update()
-        held_down = {"mouse0": True, "mouse2": False, "esc": False, "space": True, "f": False}
+        held_down = {"mouse0": True, "mouse2": False, "esc": False, "space": True, "f": False, "j": False}
         show_future = True
+        show_alive_for = False
         turns_used = [0 for _ in range(self.NoOfPlayers)]
         while not turn_chosen:
             events = pygame.event.get()
@@ -337,6 +347,10 @@ class Game:
                 turn_chosen = True
             if pygame.key.get_pressed()[pygame.K_f] and not held_down["f"]:
                 show_future = not show_future
+                show_alive_for = False
+            if pygame.key.get_pressed()[pygame.K_j] and not held_down["j"]:
+                show_alive_for = not show_alive_for
+                show_future = False
             on_button = [False, False]
             if 2 * self.ButtonBorderSize < screen.get_width() - x < self.RightColumnSize - 2 * self.ButtonBorderSize:
                 if 0 < screen.get_height() - y - self.ButtonBorderSize < self.ButtonHeight:
@@ -350,11 +364,15 @@ class Game:
             
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), on_button,
                                    turns_used, not turn[0] is None)
-            board.show_future(screen, turn, player_no, smaller=show_future)
+            if show_alive_for:
+                board.show_alive(screen, self.TextSize,self.Colour)
+            else:
+                board.show_future(screen, turn, player_no, smaller=show_future)
             held_down["mouse0"] = pygame.mouse.get_pressed()[0]
             held_down["mouse2"] = pygame.mouse.get_pressed()[2]
             held_down["space"] = pygame.key.get_pressed()[pygame.K_SPACE]
             held_down["f"] = pygame.key.get_pressed()[pygame.K_f]
+            held_down["j"] = pygame.key.get_pressed()[pygame.K_j]
             pygame.display.update()
         return turn
     
@@ -386,7 +404,7 @@ class Game:
                     player_scores[temp_board.Cell[a][b].CurrentPlayer] += 1
         return player_scores
     
-    def draw_right_column(self, screen, player_scores, on_button, turns_used, generated):
+    def draw_right_column(self, screen, player_scores, on_button, turns_used, generated, clickable=None):
         pygame.draw.rect(screen, self.Colour["Background"], (screen.get_width() - self.RightColumnSize, 0,
                                                              self.RightColumnSize, screen.get_height()))
         
@@ -406,14 +424,17 @@ class Game:
                               button_centres[a][1] - self.ButtonHeight // 2 + 2 * self.ButtonBorderSize,
                               self.RightColumnSize - 4 * self.ButtonBorderSize,
                               self.ButtonHeight - self.ButtonBorderSize - 2))
-        button_colours = [self.Colour["Text"] for _ in range(2)]
-        if on_button[0]:
-            button_colours[0] = self.Colour["Highlighter"]
-        if generated:
-            button_colours[1] = self.Colour["Unselectable"]
+        if clickable is None:
+            button_colours = [self.Colour["Text"] for _ in range(2)]
+            if on_button[0]:
+                button_colours[0] = self.Colour["Highlighter"]
+            if generated:
+                button_colours[1] = self.Colour["Unselectable"]
+            else:
+                if on_button[1]:
+                    button_colours[1] = self.Colour["Highlighter"]
         else:
-            if on_button[1]:
-                button_colours[1] = self.Colour["Highlighter"]
+            button_colours = [self.Colour["Unselectable"] for _ in range(2)]
             
         button_text = ("End Turn", "Generate")
         for a in range(2):

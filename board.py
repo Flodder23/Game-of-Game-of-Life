@@ -32,22 +32,25 @@ class Cell:
         self.FullImmune = False
         self.PartImmune = False
     
-    def draw(self, screen, size, board):
+    def draw(self, screen, size, board, colour=None):
         x, y = self.Coordinates
         x += board.Size // 2
         y += board.Size // 2
-        pygame.draw.rect(screen, board.Colour["Dead"], (x - size // 2, y - size // 2, size, size))
-        if not self.CurrentState == set_up.Dead:
-            if self.PartImmune:
-                pygame.draw.circle(screen, board.Colour["Player" + str(self.CurrentPlayer)], (x, y), size // 2)
-                if not self.FullImmune:
+        if colour is None:
+            pygame.draw.rect(screen, board.Colour["Dead"], (x - size // 2, y - size // 2, size, size))
+            if not self.CurrentState == set_up.Dead:
+                if self.PartImmune:
+                    pygame.draw.circle(screen, board.Colour["Player" + str(self.CurrentPlayer)], (x, y), size // 2)
+                    if not self.FullImmune:
+                        pygame.draw.rect(screen, board.Colour["Player" + str(self.CurrentPlayer)],
+                                         (x - size // 2, y - size // 2, size, size // 2))
+                elif self.CurrentPlayer == 0:
+                    pygame.draw.rect(screen, board.Colour["Alive"], (x - size // 2, y - size // 2, size, size))
+                else:
                     pygame.draw.rect(screen, board.Colour["Player" + str(self.CurrentPlayer)],
-                                     (x - size // 2, y - size // 2, size, size // 2))
-            elif self.CurrentPlayer == 0:
-                pygame.draw.rect(screen, board.Colour["Alive"], (x - size // 2, y - size // 2, size, size))
-            else:
-                pygame.draw.rect(screen, board.Colour["Player" + str(self.CurrentPlayer)],
-                                 (x - size // 2, y - size // 2, size, size))
+                                     (x - size // 2, y - size // 2, size, size))
+        else:
+            pygame.draw.rect(screen, colour, (x - size // 2, y - size // 2, size, size))
     
     def update(self, board=None, immunity=False):
         self.CurrentState = self.NextState
@@ -260,6 +263,14 @@ class Board:
             temp_board.take_turn()
             temp_board.update(immunity=immunity)
             temp_board.draw(screen, preview=True)
+    
+    def show_alive(self, screen, size, colours):
+        for a in self.Cell:
+            for b in a:
+                b.draw(screen, self.Size - self.CellGap, self, colour=colours["Dead"])
+                if not b.CurrentPlayer == 0:
+                    set_up.write(screen, b.Coordinates[0] + self.Size // 2, b.Coordinates[1] + self.Size // 2,
+                                 str(b.AliveFor), colours["Player" + str(b.CurrentPlayer)], size, alignment=("centre", "centre"))
 
     def get_square(self, x, y):
         return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion

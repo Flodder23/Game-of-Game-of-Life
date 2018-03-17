@@ -50,3 +50,4 @@ Game Controls:
 --- Press CTRL to use multiple turns in one.
 --- Press ESC to deselect a cell when taking a turn.
 --- Press F to show/hide what the board will look like next turn (the smaller squares)
+--- Press J to show/hide showing the amount of time cells have been alive for
