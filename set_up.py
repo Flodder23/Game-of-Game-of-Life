@@ -236,8 +236,12 @@ class Game:
         self.ButtonBorderSize = config.G_ButtonBorderSize
         self.WinMessageWidth = config.G_WinMessageWidth
         self.WinMessageHeight = config.G_WinMessageHeight
+        self.PartImmune = config.G_PartImmune
         self.PartImmuneTime = config.G_PartImmuneTime
+        self.PartImmuneKill = config.G_PartImmuneKill
+        self.FullImmune = config.G_FullImmune
         self.FullImmuneTime = config.G_FullImmuneTime
+        self.FullImmuneKill = config.G_FullImmuneKill
         self.Colour = config.G_Colour
         self.CurrentPlayer = 1
         self.IsTurnLimit = config.G_IsTurnLimit
@@ -250,6 +254,8 @@ class Game:
         self.PlayerAmount = config.G_PlayerAmount
         self.StartingTurns = config.G_StartingTurns
         self.FairerTurns = config.G_FairerTurns
+        self.Started = False
+        self.TurnsPerRound = config.G_TurnsPerRound
         self.Players = [Player(n, self.Colour["Player" + str(n)], self.StartingTurns) for n in range(1, self.NoOfPlayers + 1)]
     
     def run(self, screen, board):
@@ -258,34 +264,39 @@ class Game:
         screen = pygame.display.set_mode((board.Size * board.Width + self.RightColumnSize, board.Size * board.Height))
         screen.fill(self.Colour["Background"])
         if self.FairerTurns:
-            turns_added = 2
-            for p in range(self.NoOfPlayers // 2):
-                self.Players[p].SpareTurns -= 1
+            turns_added = self.TurnsPerRound
         else:
             turns_added = 1
-        for player in self.Players:
-            player.SpareTurns -= turns_added
+        if not self.Started:
+            self.Started = True
+            if self.FairerTurns:
+                for p in range(self.NoOfPlayers // 2):
+                    self.Players[p].SpareTurns -= self.TurnsPerRound // 2
         while True:
-            gen_text = "Generations: " + str(self.Gens)
+            caption = "Generations: " + str(self.Gens)
             if self.IsGenLimit:
-                 gen_text += " (%s)" % str(self.GenLimit)
-            turn_text = "Turns: " + str(self.Turns)
+                 caption += ", (%s)" % str(self.GenLimit)
+            caption += ", Turns: " + str(self.Turns)
             if self.IsTurnLimit:
-                turn_text += " (%s)" % str(self.TurnLimit)
+                caption += " (%s)" % str(self.TurnLimit)
             if self.BoardAmountWin:
-                turn_text += " Cells needed to win: " + str(maths.floor(self.BoardAmount * self.Width * self.Height))
-            pygame.display.set_caption("Game of Life - Game - " + gen_text + " " + turn_text)
+                caption += ", Cells needed to win: " + str(maths.floor(self.BoardAmount * self.Width * self.Height))
+            if self.PartImmune:
+                caption += ", Part Immune after %s Turns" % str(self.PartImmuneTime)
+            if self.FullImmune:
+                caption += ", Fully Immune after %s Turns" % str(self.FullImmuneTime)
+            pygame.display.set_caption("Game of Life - Game - " + caption)
             player_scores = self.get_player_scores(board)
             for p in range(self.NoOfPlayers):
                 self.Players[p].NoOfCells = player_scores[p + 1]
             self.Players[self.CurrentPlayer - 1].SpareTurns += turns_added
             turn = self.take_turn(screen, board, self.CurrentPlayer)
             if turn == "Go Back":
-                self.Players[self.CurrentPlayer - 1].SpareTurns -= 1
+                self.Players[self.CurrentPlayer - 1].SpareTurns -= turns_added
                 return False
             else:
                 board.impose_turns(turn, self.CurrentPlayer)
-                self.Players[self.CurrentPlayer - 1].SpareTurns -= len(turn[1])
+                self.Players[self.CurrentPlayer - 1].SpareTurns -= len(turn[1])  #####CHANGE
                 screen.fill(self.Colour["Background"])
                 board.draw(screen)
             if turn[0] is not None:
@@ -321,6 +332,7 @@ class Game:
                 while True:
                     if check_quit(pygame.event.get()):
                         if board_view:
+                            self.Started = False
                             return True
                         else:
                             board_view = True
@@ -347,8 +359,11 @@ class Game:
                     if turn[0] == len(turn[1]):
                         turn[0] = None
                     else:
+                        t = turn[1][-1]
                         del turn[1][-1]
-                        turns_used[player_no - 1] -= 1
+                        turns_used[player_no - 1] -= self.check_turn_is_valid(board, turn, player_no, t[0], t[1], t[2],
+                                                                              self.FullImmuneKill)[1]
+                        
                 held_down["esc"] = True
             else:
                 held_down["esc"] = False
@@ -356,14 +371,20 @@ class Game:
             a, b = board.get_square(x, y)
             if 0 <= a < board.Width + board.Cushion and 0 <= b < board.Height + board.Cushion:
                 kill = None
-                if len(turn[1]) < self.Players[player_no - 1].SpareTurns and not (held_down["mouse0"] or held_down["mouse2"]):
-                    if pygame.mouse.get_pressed()[0] and self.check_turn_is_valid(board, turn, player_no, a, b, False):
-                        kill = False
-                    elif pygame.mouse.get_pressed()[2] and self.check_turn_is_valid(board, turn, player_no, a, b, True):
-                        kill = True
+                if not (held_down["mouse0"] or held_down["mouse2"]) and self.Players[player_no - 1].SpareTurns > turns_used[player_no - 1]:
+                    if pygame.mouse.get_pressed()[0]:
+                        turn_validation = self.check_turn_is_valid(board, turn, player_no, a, b, False,
+                                                                   self.Players[player_no - 1].SpareTurns - turns_used[player_no - 1])
+                        if turn_validation[0]:
+                            kill = False
+                    elif pygame.mouse.get_pressed()[2]:
+                        turn_validation = self.check_turn_is_valid(board, turn, player_no, a, b, True,
+                                                                   self.Players[player_no - 1].SpareTurns - turns_used[player_no - 1])
+                        if turn_validation[0]:
+                            kill = True
                 if kill is not None:
                     turn[1].append([a, b, kill])
-                    turns_used[player_no - 1] += 1
+                    turns_used[player_no - 1] += turn_validation[1]
             if pygame.key.get_pressed()[pygame.K_SPACE] and not held_down["space"]:
                 turn_chosen = True
             if pygame.key.get_pressed()[pygame.K_f] and not held_down["f"]:
@@ -386,7 +407,7 @@ class Game:
             self.draw_right_column(screen, self.get_player_scores(board, turns=turn, player_no=player_no), on_button,
                                    turns_used, not turn[0] is None, update=False)
             if show_alive_for:
-                board.show_alive(screen, self.TextSize,self.Colour)
+                board.show_alive(screen, self.TextSize, self.Colour, turn, player_no)
             else:
                 board.show_future(screen, turn, player_no, smaller=show_future)
             held_down["mouse0"] = pygame.mouse.get_pressed()[0]
@@ -397,19 +418,26 @@ class Game:
             pygame.display.update()
         return turn
     
-    @staticmethod
-    def check_turn_is_valid(board, turns, player_no, a, b, kill):
+    def check_turn_is_valid(self, board, turns, player_no, a, b, kill, turns_left):
         temp_board = copy.deepcopy(board)
         temp_board.impose_turns(turns, player_no)
         if temp_board.Cell[a][b].CurrentPlayer == player_no:
-            return kill
+            return kill, 1
         elif temp_board.Cell[a][b].CurrentState == Dead:
-            return not kill
+            return not kill, 1
         else:
             if temp_board.Cell[a][b].FullImmune:
-                return False
+                if turns_left >= self.FullImmuneKill:
+                    return kill, self.FullImmuneKill
+                else:
+                    return False, 1
+            elif temp_board.Cell[a][b].PartImmune:
+                if turns_left >= self.PartImmuneKill:
+                    return kill, self.PartImmuneKill
+                else:
+                    return False, 1
             else:
-                return kill
+                return kill, 1
     
     def get_player_scores(self, board, turns=None, player_no=0):
         player_scores = [0 for _ in range(self.NoOfPlayers + 1)]

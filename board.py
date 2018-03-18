@@ -264,13 +264,15 @@ class Board:
             temp_board.update(immunity=immunity)
             temp_board.draw(screen, preview=True)
     
-    def show_alive(self, screen, size, colours):
-        for a in self.Cell:
+    def show_alive(self, screen, size, colours, turns, player):
+        temp_board = copy.deepcopy(self)
+        temp_board.impose_turns(turns, player)
+        for a in temp_board.Cell:
             for b in a:
-                b.draw(screen, self.Size - self.CellGap, self, colour=colours["Dead"])
+                b.draw(screen, self.Size - self.CellGap, self)
                 if not b.CurrentPlayer == 0:
                     set_up.write(screen, b.Coordinates[0] + self.Size // 2, b.Coordinates[1] + self.Size // 2,
-                                 str(b.AliveFor), colours["Player" + str(b.CurrentPlayer)], size, alignment=("centre", "centre"))
+                                 str(b.AliveFor), colours["Dead"], size, alignment=("centre", "centre"))
 
     def get_square(self, x, y):
         return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion
