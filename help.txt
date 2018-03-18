@@ -38,7 +38,7 @@ Simulator Controls:
 ----8 - r-Pentomino
 
 **2-Player Game
-This is a 2-player game based on the mechanics of the simulator. Players take it in turns to either place one of their own cells or kill any living cell.
+This is a 2-player game based on the mechanics of the simulator. Players take it in turns to either place one of their own cells or kill any living cell. They can also choose to "Generate" the board - ie. go forward a generation - at any point in their round. They don't have to use this ability, and can only use it once perround.
 There are 2 modes:
 --- 1 vs 1 - This is where both players are trying to get as many of their own colour on the board as possible. The winner is the one who either gets the most after a pre-determined amount of turns or who gets a certain amount first. The board has rotational symmetry, with colours on one half the opposite to the cell it corresponds to on the other half, to make it fair.
 
@@ -50,3 +50,4 @@ Game Controls:
 --- Press CTRL to use multiple turns in one.
 --- Press ESC to deselect a cell when taking a turn.
 --- Press F to show/hide what the board will look like next turn (the smaller squares)
+--- Press J to show/hide showing the amount of time cells have been alive for

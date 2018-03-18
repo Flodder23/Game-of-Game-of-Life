@@ -32,22 +32,25 @@ class Cell:
         self.FullImmune = False
         self.PartImmune = False
     
-    def draw(self, screen, size, board):
+    def draw(self, screen, size, board, colour=None):
         x, y = self.Coordinates
         x += board.Size // 2
         y += board.Size // 2
-        pygame.draw.rect(screen, board.Colour["Dead"], (x - size // 2, y - size // 2, size, size))
-        if not self.CurrentState == set_up.Dead:
-            if self.PartImmune:
-                pygame.draw.circle(screen, board.Colour["Player" + str(self.CurrentPlayer)], (x, y), size // 2)
-                if not self.FullImmune:
+        if colour is None:
+            pygame.draw.rect(screen, board.Colour["Dead"], (x - size // 2, y - size // 2, size, size))
+            if not self.CurrentState == set_up.Dead:
+                if self.PartImmune:
+                    pygame.draw.circle(screen, board.Colour["Player" + str(self.CurrentPlayer)], (x, y), size // 2)
+                    if not self.FullImmune:
+                        pygame.draw.rect(screen, board.Colour["Player" + str(self.CurrentPlayer)],
+                                         (x - size // 2, y - size // 2, size, size // 2))
+                elif self.CurrentPlayer == 0:
+                    pygame.draw.rect(screen, board.Colour["Alive"], (x - size // 2, y - size // 2, size, size))
+                else:
                     pygame.draw.rect(screen, board.Colour["Player" + str(self.CurrentPlayer)],
-                                     (x - size // 2, y - size // 2, size, size // 2))
-            elif self.CurrentPlayer == 0:
-                pygame.draw.rect(screen, board.Colour["Alive"], (x - size // 2, y - size // 2, size, size))
-            else:
-                pygame.draw.rect(screen, board.Colour["Player" + str(self.CurrentPlayer)],
-                                 (x - size // 2, y - size // 2, size, size))
+                                     (x - size // 2, y - size // 2, size, size))
+        else:
+            pygame.draw.rect(screen, colour, (x - size // 2, y - size // 2, size, size))
     
     def update(self, board=None, immunity=False):
         self.CurrentState = self.NextState
@@ -71,9 +74,9 @@ class Cell:
         ar = a + 1  # a right
         bu = b - 1  # b up
         bd = b + 1  # b down
-        if board.Wrap and a == board.Width - 1:
+        if board.Wrap and a == board.Width + 2 * board.Cushion - 1:
             ar = 0
-        if board.Wrap and b == board.Height - 1:
+        if board.Wrap and b == board.Height + 2 * board.Cushion - 1:
             bd = 0
         total[board.Cell[al][b].CurrentState] += 1
         player[board.Cell[al][b].CurrentPlayer] += 1
@@ -142,7 +145,6 @@ class Board:
             self.FullImmuneTime = state.FullImmuneTime
         self.Cell = [[Cell(a, b, set_up.Square, set_up.Dead, self, 0) for b in range(
             self.Height + (2 * self.Cushion))] for a in range(self.Width + 2 * self.Cushion)]
-        pygame.display.set_caption("Game of Life - Generation 0")
     
     def set_up(self, chances, rotational_symmetry=None):
         width = self.Width
@@ -213,9 +215,10 @@ class Board:
             for b in range(self.Height + 2 * self.Cushion):
                 self.Cell[a][b].update(board=self, immunity=immunity)
     
-    def take_turn(self):
+    def take_turn(self, update_caption=False):
         """Changes the NextState variables & updates display caption"""
-        pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
+        if update_caption:
+            pygame.display.set_caption("Game of Life - Generation " + str(self.Generations))
         if self.Wrap:
             cushion = 0
         else:
@@ -227,10 +230,7 @@ class Board:
                     if fate == set_up.Dead:
                         self.Cell[a][b].kill()
                     else:
-                        if player == 0:
-                            self.Cell[a][b].birth(fate, 0)
-                        else:
-                            self.Cell[a][b].birth(fate, player)
+                        self.Cell[a][b].birth(fate, player)
     
     def place_preset(self, screen, preset_no, a, b):
         if self.Wrap:
@@ -240,10 +240,10 @@ class Board:
         for c in range(len(shape)):
             for d in range(len(shape[c])):
                 if self.Wrap:
-                    if a + c >= self.Width:
-                        a -= self.Width
-                    if b + d >= self.Height:
-                        b -= self.Height
+                    if a + c >= self.Width + 2 * self.Cushion:
+                        a -= self.Width + 2 * self.Cushion
+                    if b + d >= self.Height + 2 * self.Cushion:
+                        b -= self.Height + 2 * self.Cushion
                 if shape[c][d] == 0:
                     self.Cell[a + c][b + d].kill()
                 else:
@@ -255,19 +255,38 @@ class Board:
         self.__init__(state, players=self.Players)
         self.update()
     
-    def show_future(self, screen, actions, player, smaller=True):
+    def show_future(self, screen, actions, player, smaller=True, immunity=True):
         temp_board = copy.deepcopy(self)
-        for action in actions:
-            if action[2]:
-                temp_board.Cell[action[0]][action[1]].kill()
-            else:
-                temp_board.Cell[action[0]][action[1]].birth(set_up.Square, player)
-            temp_board.Cell[action[0]][action[1]].update()
+        temp_board.impose_turns(actions, player)
         temp_board.draw(screen, update_display=False)
         if smaller:
             temp_board.take_turn()
-            temp_board.update()
+            temp_board.update(immunity=immunity)
             temp_board.draw(screen, preview=True)
+    
+    def show_alive(self, screen, size, colours, turns, player):
+        temp_board = copy.deepcopy(self)
+        temp_board.impose_turns(turns, player)
+        for a in temp_board.Cell:
+            for b in a:
+                b.draw(screen, self.Size - self.CellGap, self)
+                if not b.CurrentPlayer == 0:
+                    set_up.write(screen, b.Coordinates[0] + self.Size // 2, b.Coordinates[1] + self.Size // 2,
+                                 str(b.AliveFor), colours["Dead"], size, alignment=("centre", "centre"))
 
     def get_square(self, x, y):
         return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion
+    
+    def impose_turns(self, turns, player_no):
+        for a in range(len(turns[1])):
+            if turns[0] == a:
+                self.take_turn()
+                self.update(immunity=True)
+            if turns[1][a][2]:
+                self.Cell[turns[1][a][0]][turns[1][a][1]].kill()
+            else:
+                self.Cell[turns[1][a][0]][turns[1][a][1]].birth(set_up.Square, player_no)
+            self.Cell[turns[1][a][0]][turns[1][a][1]].update()
+        if turns[0] == len(turns[1]):
+            self.take_turn()
+            self.update(immunity=True)
