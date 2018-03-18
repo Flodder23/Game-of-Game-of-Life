@@ -18,7 +18,7 @@ The initial pattern constitutes the seed of the system. The first generation is 
 # General Help:
 To change how the game looks, go into config.py and change the values there.
 Each part looks like this:
-<Name> = <Value>  # <Original value> # <description of what changing the value will do>
+`<Name> = <Value>  # <Original value> # <description of what changing the value will do>`
 If the game is behaving oddly please check these values - ones which vary too far from the original may break the game
 
 ## General Controls:
