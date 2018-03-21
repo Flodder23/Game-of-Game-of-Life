@@ -37,6 +37,7 @@ class Menu:
         pygame.display.set_mode((2 * self.SideGapSize + self.ButtonWidth,
                                  2 * self.TitleGapSize + len(self.Buttons) * (self.ButtonHeight + self.ButtonGapSize)))
         screen.fill(self.Colour["Background"])
+        fps_limiter = pygame.time.Clock()
         
         buttons = [[screen.get_width() // 2,
                     2 * self.TitleGapSize + a * (self.ButtonHeight + self.ButtonGapSize) + self.TitleTextSize,
@@ -69,6 +70,7 @@ class Menu:
                 write(screen, screen.get_width() // 2, buttons[a][1], buttons[a][2], buttons[a][3], self.TextSize,
                       alignment=("centre", "centre"))
             pygame.display.update()
+            fps_limiter.tick(30)
 
 
 class Sim:
@@ -83,7 +85,6 @@ class Sim:
         self.Cushion = config.S_Cushion
         self.PreviewSize = 0
         self.SetUpChances = config.S_SetUpChances
-        
         self.SliderSize = config.S_SliderSize
         self.HighlightSize = config.S_HighlightSize
         self.NoOfNotches = config.S_NoOfNotches
@@ -94,7 +95,6 @@ class Sim:
         self.SpaceBetweenNotches = (self.EndOfSlider - self.StartOfSlider) / (self.NoOfNotches - 1)
         self.SliderY = self.Size * self.Width + self.CellGap // 2 + self.SliderSize // 2
         self.ButtonStart = self.Size * self.Width
-        
         self.GPS = config.S_GPS
         self.TopGPS = config.S_TopGPS
         self.BottomGPS = config.S_BottomGPS
@@ -308,6 +308,7 @@ class Game:
                 self.CurrentPlayer += 1
             win = self.check_for_wins(board, self.Turns, self.Gens)
             if win is not None:
+                fps_limiter = pygame.time.Clock()
                 if win[0].startswith("T"):
                     win_message = "Turn limit reached.Player " + str(win[1]) + " wins!"
                 elif win[0].startswith("G"):
@@ -341,6 +342,7 @@ class Game:
                             self.draw_right_column(screen, self.get_player_scores(board), (False, False), (0, 0, 0, 0), 0,
                                                    clickable=False)
                             pygame.display.update()
+                            fps_limiter.tick(30)
     
     def take_turn(self, screen, board, player_no):
         turn_chosen = False
@@ -350,6 +352,7 @@ class Game:
         show_future = True
         show_alive_for = False
         turns_used = [0 for _ in range(self.NoOfPlayers)]
+        fps_limiter = pygame.time.Clock()
         while not turn_chosen:
             events = pygame.event.get()
             if check_quit(events) and not held_down["esc"]:  # if ESC is pressed
@@ -416,6 +419,7 @@ class Game:
             held_down["f"] = pygame.key.get_pressed()[pygame.K_f]
             held_down["j"] = pygame.key.get_pressed()[pygame.K_j]
             pygame.display.update()
+            fps_limiter.tick(30)
         return turn
     
     def check_turn_is_valid(self, board, turns, player_no, a, b, kill, turns_left):
@@ -509,14 +513,14 @@ class Game:
     def check_for_wins(self, board, turns, generations):
         player_scores = self.get_player_scores(board)
         del player_scores[0]
+        if self.IsTurnLimit and turns >= self.TurnLimit:
+            return "Turn Limit Reached", player_scores.index(max(player_scores)) + 1
+        if self.IsGenLimit and generations >= self.GenLimit:
+            return "Generation Limit Reached", player_scores.index(max(player_scores)) + 1
         for a in range(len(player_scores)):
             if self.BoardAmountWin and player_scores[a] > self.Height * self.Width * self.BoardAmount:
                 return "Board Amount Passed", a + 1
             for b in range(len(player_scores)):
-                if self.IsTurnLimit and turns >= self.TurnLimit:
-                    return "Turn Limit Reached", player_scores.index(max(player_scores)) + 1
-                if self.IsGenLimit and generations >= self.GenLimit:
-                    return "Generation Limit Reached", player_scores.index(max(player_scores)) + 1
                 if self.PlayerAmountWin and player_scores[a] * self.PlayerAmount > player_scores[b]:
                     return "Score Difference Passed", a + 1
                 
@@ -548,6 +552,7 @@ class Help:
         screen.blit(self.Surfaces[0], help_rect)
         self.draw(screen, self.Surfaces[1], slider_centre, slider_range)
         slider_last_turn = False
+        fps_limiter = pygame.time.Clock()
         while True:
             events = pygame.event.get()
             if check_quit(events):
@@ -585,6 +590,7 @@ class Help:
                             self.draw(screen, self.Surfaces[1], slider_centre, slider_range)
             
             pygame.display.update()
+            fps_limiter.tick(30)
     
     def draw(self, screen, help_surface, slider_centre, slider_range):
         pygame.draw.rect(screen, self.Colour["Background"],

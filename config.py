@@ -20,7 +20,7 @@ S_Width = 40  # 50 # How many squares wide the board is
 S_Height = 25  # 30 # Ditto but with height
 S_Size = 22  # 20 # The size of the sides of each square (in pixels)
 S_CellGap = 2  # 2 # The gap between each cell
-S_Wrap = True  # True # Whether the board wraps around on itself
+S_Wrap = False  # True # Whether the board wraps around on itself
 S_Cushion = 0  # 0 # How far the board extends beyond the visible amount
 S_SetUpChances = (0, 0)  # (0, 0) # The chances of a cell being dead or alive when game is first loaded
 S_SliderSize = 50  # 50 # The gap at the side of the board for the FPS slider
@@ -63,12 +63,14 @@ G_Colour = {"Player1": (150, 205, 80),  # (150, 205, 80) # The colour of Player 
             "Background": (120, 120, 120),  # (120, 120, 120) # The colour of the background
             "Text": (0, 0, 0),  # (0, 0, 0) # The colour of the text
             "ButtonBorder": (0, 0, 0)}  # (0, 0, 0) # The colour of the border of the button
+
 G_PartImmune = True  # True # Whether or not the game creates part immune cells
 G_PartImmuneTime = 4  # 4 # The number of turns a cell has to be alive before it becomes part immune (doesn't die unless your opponent kills it)
 G_PartImmuneKill = 2  # 2 # The number of turns it costs to kill a part immune cell
 G_FullImmune = True  # True # Whether or not the game creates full immune cells
 G_FullImmuneTime = 8  # 8 # The number of turns a cell has to be alive before it becomes fully immune (nothing can kill it except you) Must be be bigger than G_PartImmuneTime
 G_FullImmuneKill = 4  # 4 # The number of turns it costs to kill a fully immune cell
+
 G_IsTurnLimit = True  # True # Whether there is a limit on the amount of turns in a game
 G_TurnLimit = 20  # 30 # The amount of turns each player can have before the game ends
 G_IsGenLimit = False  # False # Whether there is a limit on the amount of generations in a game
@@ -77,9 +79,10 @@ G_BoardAmountWin = True  # True # Whether the game ends when a player gets a cer
 G_BoardAmount = 0.25  # 0.3 # The amount of the board a player must get to win; an amount between 0 and 1
 G_PlayerAmountWin = True  # True # Whether the game ends when a player has a certain amount of cells more than the opponent
 G_PlayerAmount = 0.25  # 0.25 # If the number of cells a player has timesed by the number is bigger than the other's, the first player wins.
+
 G_StartingTurns = 3  # 3 # The amount of turns each player starts with.
 G_FairerTurns = True  # True # if this is True, instead of taking it in turns to go, the players will have 2 turns each in a row, with the first player starting with only one turn but gettting 2 after that.
-G_TurnsPerRound = 2  # 2 # How many turns each player gets per round. if FairerTurns is True, the first player gets half this many.
+G_TurnsPerRound = 2  # 2 # How many turns each player gets per round. if FairerTurns is True, the first player gets half this many on their first go.
 
 ##HELP SCREEN
 H_SectionGapSize = 5  # 5 # The size of the gap between the 2 sections of text
