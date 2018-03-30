@@ -232,6 +232,15 @@ class Board:
                     else:
                         self.Cell[a][b].birth(fate, player)
     
+    def reset(self, state):
+        self.__init__(state, players=self.Players)
+        self.update()
+    
+    def get_square(self, x, y):
+        return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion
+
+
+class SimBoard(Board):
     def place_preset(self, screen, preset_no, a, b):
         if self.Wrap:
             shape = preset.get(preset_no, a, b, self)[0]
@@ -250,11 +259,9 @@ class Board:
                     self.Cell[a + c][b + d].birth(shape[c][d], 0)
         self.update()
         self.draw(screen)
-    
-    def reset(self, state):
-        self.__init__(state, players=self.Players)
-        self.update()
-    
+
+
+class GameBoard(Board):
     def show_future(self, screen, actions, player, smaller=True, immunity=True):
         temp_board = copy.deepcopy(self)
         temp_board.impose_turns(actions, player)
@@ -273,9 +280,6 @@ class Board:
                 if not b.CurrentPlayer == 0:
                     set_up.write(screen, b.Coordinates[0] + self.Size // 2, b.Coordinates[1] + self.Size // 2,
                                  str(b.AliveFor), colours["Dead"], size, alignment=("centre", "centre"))
-
-    def get_square(self, x, y):
-        return min(x // self.Size, self.Width) + self.Cushion, min(y // self.Size, self.Height) + self.Cushion
     
     def impose_turns(self, turns, player_no):
         for a in range(len(turns[1])):
