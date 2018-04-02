@@ -1,3 +1,11 @@
+# Installation
+## Python
+ Python can be installed [here](https://www.python.org/downloads/).
+ The game was built and tested in Python 3.6.0.
+## PyGame
+ PyGame's official installation guide is [here](https://www.pygame.org/wiki/GettingStarted).
+ The game was built and tested in PyGame 1.9.3.
+
 # About the Game of Life
 
 The universe of the Game of Life is an infinite two-dimensional orthogonal grid of square cells, each of which is in one of two possible states, alive or dead, or "populated" or "unpopulated".
