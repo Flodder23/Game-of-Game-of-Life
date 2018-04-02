@@ -1,5 +1,6 @@
 ##General
 Font = "Arial"  # "Arial" # The font used in the game
+FPS = 30  # The default FPS; what screens which don't need a specific FPS (like the main menu) run at
 
 ##MAIN MENU
 M_ButtonHeight = 90  # 50 # The height of the buttons
@@ -46,7 +47,7 @@ G_CellGap = 2  # 2 # The gap between each cell
 G_NoOfPlayers = 2  # 2 # How many players there are - must be 2 or 4
 G_PlayerNames = ["Joe", "Adam O'Neal", "Max", "Matej"]  # Player's names
 G_PreviewSize = G_Size // 2  # G_Size // 2 # The size of the cells in preview mode
-G_SetUpChances = (10, 2, 1, 1, 1)  # (10, 2, 1, 1, 1) # The likleyhood of each player's cells spawning in a cell (first one is chance of none spawning) at the start of a game
+G_SetUpChances = (10, 1, 0, 0, 0)#, 2, 1, 1, 1)  # (10, 2, 1, 1, 1) # The likleyhood of each player's cells spawning in a cell (first one is chance of none spawning) at the start of a game
 G_TextSize = 32  # 32 # The size of the text
 G_RightColumnSize = 150  # 150 # The size of the column on the right
 G_ButtonHeight = 50  # 50 # The height of the button
@@ -81,7 +82,7 @@ G_PlayerAmountWin = True  # True # Whether the game ends when a player has a cer
 G_PlayerAmount = 0.25  # 0.25 # If the number of cells a player has timesed by the number is bigger than the other's, the first player wins.
 
 G_StartingTurns = 3  # 3 # The amount of turns each player starts with.
-G_FairerTurns = True  # True # if this is True, instead of taking it in turns to go, the players will have 2 turns each in a row, with the first player starting with only one turn but gettting 2 after that.
+G_FairerTurns = True  # True # if this is True, instead of taking it in turns to go, the first player starting with only half as many turns as you get per round.
 G_TurnsPerRound = 2  # 2 # How many turns each player gets per round. if FairerTurns is True, the first player gets half this many on their first go.
 
 ##HELP SCREEN

@@ -7,11 +7,11 @@ import board
 pygame.init()
 Screen = pygame.display.set_mode((500, 500))
 pygame.display.set_icon(pygame.image.load("Icon.png"))
-pygame.event.set_allowed(None)  # PyGame wil now not check for any inputs
+pygame.event.set_allowed(None)  # PyGame will now not check for any inputs
 allowed_events = (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN, pygame.KEYUP, pygame.QUIT)
 for event in allowed_events:         # PyGame will now only check inputs for things used in the program, increasing speed
     pygame.event.set_allowed(event)  # and efficiency.
-Sim = set_up.Sim()  #Setting up
+Sim = set_up.Sim()  # Setting up
 SimBoard = board.SimBoard(Sim)
 SimBoard.set_up(Sim.SetUpChances)
 Game = set_up.Game()
@@ -21,15 +21,15 @@ Help = set_up.Help()
 Menu = set_up.Menu()
 MenuChoice = Menu.get_choice(Screen)
 
-while MenuChoice in (Menu.Buttons[:3]):
-    if MenuChoice == Menu.Buttons[0]:
+while MenuChoice in (Menu.Buttons[:3]):  # If a button that wasn't the Quit button was pressed
+    if MenuChoice == Menu.Buttons[0]:  # If the Simulator button was pressed
         Sim.run(Screen, SimBoard)
-    elif MenuChoice == Menu.Buttons[1]:
-        if Game.run(Screen, GameBoard):
-            Game = set_up.Game()
-            GameBoard = board.Board(Game, players=True)
+    elif MenuChoice == Menu.Buttons[1]:  # If the Game button was pressed
+        if Game.run(Screen, GameBoard):  # Runs the game; value returned is boolean value which is True if the game has ended
+            Game = set_up.Game()         # and if it did the game is reset so you can play again
+            GameBoard = board.GameBoard(Game, players=True)
             GameBoard.set_up(Game.SetUpChances, rotational_symmetry=Game.NoOfPlayers)
-    elif MenuChoice == Menu.Buttons[2]:
+    elif MenuChoice == Menu.Buttons[2]:  # If the Help Button was pressed
         Help.display(Screen)
-    MenuChoice = Menu.get_choice(Screen)
+    MenuChoice = Menu.get_choice(Screen)  # Once the player quits the previous menu choice another is made
 set_up.quit_game()
