@@ -1,5 +1,6 @@
 def get(shape_no, a, b, state):
-    """Returns a preset shape, and new coordinates if it can't be placed where originally intended."""
+    """Returns a preset shape,
+    and new coordinates if it can't be placed where originally intended."""
     if shape_no == 1:
         shape = [[0, 1, 0],
                  [0, 0, 1],
@@ -31,9 +32,9 @@ def get(shape_no, a, b, state):
                  [1, 1, 0, 0, 0, 1, 1]]
 
     elif shape_no == 6:
-        shape = [[0 for _ in range(15)] for _ in range(38)]  # this shape is too big to write out, so it is quicker to
-        to_be_birthed = [[23, 24, 34, 35],  # line 0         # to make a blank sheet of all dead cells and birth certain ones
-                         [22, 24, 34, 35],
+        shape = [[0 for _ in range(15)] for _ in range(38)]  # this shape is too big to write out,
+        to_be_birthed = [[23, 24, 34, 35],  # line 0         # so it is quicker to make a blank
+                         [22, 24, 34, 35],          # sheet of all dead cells and birth certain ones
                          [0, 1, 9, 10, 22, 23],
                          [0, 1, 8, 10],
                          [8, 9, 16, 17],
@@ -57,4 +58,5 @@ def get(shape_no, a, b, state):
 
     else: shape = [[0]]
 
-    return shape, min(a, state.Width + 2 * state.Cushion - len(shape)), min(b, state.Height + 2 * state.Cushion - len(shape[0]))
+    return (shape, min(a, state.Width + 2 * state.Cushion - len(shape)),
+            min(b, state.Height + 2 * state.Cushion - len(shape[0])))
