@@ -52,11 +52,7 @@ If the game is behaving oddly please check these values - ones which vary too fa
    - 8 - r-Pentomino
 
 # 2-Player Game
-This is a 2-player game based on the mechanics of the simulator. Players take it in turns to either place one of their own cells or kill any living cell.
-There are 2 modes:
- - 1 vs 1 - This is where both players are trying to get as many of their own colour on the board as possible. The winner is the one who either gets the most after a pre-determined amount of turns or who gets a certain amount first. The board has rotational symmetry, with colours on one half the opposite to the cell it corresponds to on the other half, to make it fair.
-
-- The Other Mode - This is where one player is trying to get as many cells on the board as they can, the other has to try and kill all their cells. The player placing cells gets 2 turns for every turn their opponent gets.
+This is a 2-player game based on the mechanics of the simulator. Players take it in turns to either place one of their own cells or kill any living cell. To win, both players are trying to get as many of their own colour on the board as possible. The winner is the one who either gets the most after a pre-determined amount of turns or who gets a certain amount first. The board has rotational symmetry, with colours on one half the opposite to the cell it corresponds to on the other half, to make it fair.
 
 There are also options to add to the original mechanics, such as cells becoming immune after being alive for a certain amount of turns.
 You can also skip turns, saving that turn for the future (eg. if you skip a turn, the next turn you can replace one of you opponent's cells with your own, as that takes 2 turns - one to kill the opponent's cell, the other to place your's.)
