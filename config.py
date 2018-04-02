@@ -116,7 +116,7 @@ G_Width = 24  # 50
 G_Height = 16  # 30
 #  Ditto but with height - Must be divisible by 2
 
-G_Size = 356  # 36
+G_Size = 36  # 36
 #  The size of the sides of each square (in pixels)
 
 G_CellGap = 2  # 2
