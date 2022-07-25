@@ -51,8 +51,12 @@ If the game is behaving oddly please check these values - ones which vary too fa
    - 7 - Pentadecathlon
    - 8 - r-Pentomino
 
+<img src="./demo_sim.gif"/>
+
 # 2-Player Game
 This is a 2-player game based on the mechanics of the simulator. Players take it in turns to either place one of their own cells or kill any living cell. To win, both players are trying to get as many of their own colour on the board as possible. The winner is the one who either gets the most after a pre-determined amount of turns or who gets a certain amount first. The board has rotational symmetry, with colours on one half the opposite to the cell it corresponds to on the other half, to make it fair.
+
+<img src="https://raw.githubusercontent.com/JosephLGibson/Game-of-Game-of-Life/81fc19b2116d652469b6a3a51778d6f172b8f3b5/demo_game.gif"/>
 
 There are also options to add to the original mechanics, such as cells becoming immune after being alive for a certain amount of turns.
 You can also skip turns, saving that turn for the future (eg. if you skip a turn, the next turn you can replace one of you opponent's cells with your own, as that takes 2 turns - one to kill the opponent's cell, the other to place your's.)
